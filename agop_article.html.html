@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGOP: A Computable Decision Procedure for Multi-Criteria Selection Under Uncertainty</title>
+
+<!-- MathJax for LaTeX -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]']],
+    processEscapes: true,
+    tags: 'none'
+  },
+  svg: { fontCache: 'global' },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --muted: #555;
+    --accent: #0a4d8c;
+    --rule: #d8d8d8;
+    --code-bg: #f5f5f5;
+    --code-ink: #222;
+    --table-head: #f0f4f8;
+  }
+  html { font-size: 11pt; }
+  body {
+    font-family: "Charter", "Georgia", "Iowan Old Style", "Times New Roman", serif;
+    color: var(--ink);
+    line-height: 1.55;
+    max-width: 48em;
+    margin: 0 auto;
+    padding: 2.5em 2em;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 {
+    font-size: 1.85em;
+    line-height: 1.2;
+    margin: 0 0 0.5em;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 1.35em;
+    margin: 2.2em 0 0.6em;
+    padding-top: 0.6em;
+    border-top: 2px solid var(--ink);
+  }
+  h3 {
+    font-size: 1.12em;
+    margin: 1.8em 0 0.4em;
+    color: var(--accent);
+  }
+  h4 {
+    font-size: 1.0em;
+    margin: 1.5em 0 0.4em;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  p {
+    margin: 0 0 0.9em;
+    text-align: justify;
+    hyphens: auto;
+  }
+  ul, ol {
+    margin: 0.4em 0 1.1em 0;
+    padding-left: 1.6em;
+  }
+  li {
+    margin: 0.3em 0;
+    text-align: justify;
+  }
+  code {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 1em 1.1em;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.83em;
+    line-height: 1.5;
+    white-space: pre;
+    border-left: 3px solid var(--accent);
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: 1em;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0 1.5em;
+    font-size: 0.9em;
+  }
+  th, td {
+    border: 1px solid var(--rule);
+    padding: 0.45em 0.6em;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--table-head);
+    font-weight: 600;
+  }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  mjx-container[display="true"] {
+    margin: 1em 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .endnote {
+    font-size: 0.9em;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    margin-top: 2.5em;
+    padding-top: 1em;
+    font-style: italic;
+    text-align: justify;
+  }
+  @page { size: A4; margin: 18mm 16mm; }
+  @media print {
+    body { padding: 0; max-width: none; font-size: 10pt; }
+    h2 { page-break-after: avoid; }
+    h3 { page-break-after: avoid; }
+    h4 { page-break-after: avoid; }
+    table, pre, mjx-container[display="true"] { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+    tbody tr:nth-child(even) { background: #f7f7f7; }
+  }
+</style>
+</head>
+<body>
+
+<h1>AGOP: A Computable Decision Procedure for Multi-Criteria Selection Under Uncertainty</h1>
+
+<h2>Abstract</h2>
+
+<p>We specify, test, correct, and prove a deterministic decision procedure&mdash;AGOP (Attributed-Graph Operator Pipeline)&mdash;for selecting among a finite set of alternatives under multi-criteria, strategic, structural, and stochastic considerations. AGOP composes graph-theoretic, game-theoretic, systems-theoretic, topological, deductive, stochastic, and probabilistic operators in a typed directed acyclic graph with two nested fixed-point subroutines. The procedure is domain-agnostic: it applies to any decision problem in which (i) alternatives can be attributed along multiple axes, (ii) alternatives interact through a compatibility relation, (iii) a decision-maker and at least one counter-party have potentially divergent interests, and (iv) outcomes are uncertain. We exhibit one arithmetic evaluation on a thirteen-alternative reference instance, demonstrate that the unmodified draft algorithm fails three specification tests, repair the failures, and prove determinism, well-typedness, convergence, and output admissibility for the corrected algorithm. Complexity is polynomial in all parameters except the Nash subroutines, which are constant-time for the two-player case and linear in the number of surviving alternatives for the adoption case.</p>
+
+<hr>
+
+<h2>1. Problem statement</h2>
+
+<h3>1.1 Input</h3>
+
+<p>A decision problem \(P = (V_0, \mathcal{A}, \Theta, \mathcal{R})\) where:</p>
+
+<ul>
+  <li>\(V_0 = \{v_1, \ldots, v_n\}\) is a finite set of decision alternatives;</li>
+  <li>\(\mathcal{A} = \{x_1, \ldots, x_d\}\) is a finite set of decision axes, each a real-valued function on \(V_0\);</li>
+  <li>\(\Theta\) is a parameter vector containing utility parameters, admissibility thresholds, prior distributions for stochastic evaluation, and normalization constants;</li>
+  <li>\(\mathcal{R} \subseteq V_0 \times V_0\) is a symmetric compatibility relation: \((u, v) \in \mathcal{R}\) iff alternatives \(u\) and \(v\) share at least one relevant attribute or resource.</li>
+</ul>
+
+<p>The decision axes are not assumed independent. The compatibility relation is not assumed transitive. The parameter vector is not assumed known with certainty; it is specified and its consequences are propagated through the procedure.</p>
+
+<h3>1.2 Output</h3>
+
+<p>A ranking \(R = (v_{(1)}, \ldots, v_{(k)})\) of alternatives \(v_{(i)} \in V_0\), each annotated with:</p>
+
+<ul>
+  <li>a structural equivalence class \(\tau(v_{(i)}) \in \mathcal{T}\), where \(\mathcal{T}\) is the set of classes induced by the procedure;</li>
+  <li>an outcome estimate \(\hat{Y}(v_{(i)})\) with a lower confidence bound \(\mathrm{LCB}_{1-\alpha}(\hat{Y}(v_{(i)}))\);</li>
+  <li>an adoption status \(\nu^*(v_{(i)}) \in [0,1]\).</li>
+</ul>
+
+<p>The output is admissible if and only if every \(v_{(i)} \in R\) satisfies: (i) \(v_{(i)}\) survives three deductive filters; (ii) \(v_{(i)}\) supports an equilibrium in the two-player game between decision-maker and counter-party; (iii) \(v_{(i)}\) has \(\mathrm{LCB}_{1-\alpha}(\hat{Y}(v_{(i)})) \geq 0\); (iv) \(v_{(i)}\)'s adoption is supported by a population equilibrium over the survivor set.</p>
+
+<h3>1.3 Objective</h3>
+
+<p>Maximize decision value \(Y = \mathrm{reward} - \mathrm{cost}\) subject to the admissibility conditions of &sect;1.2. The procedure does not learn parameters; it evaluates consequences of given parameters.</p>
+
+<hr>
+
+<h2>2. Formal objects</h2>
+
+<h3>2.1 Attributed directed graphs</h3>
+
+<p>Let \(G = (V, E, \mathbf{X})\) be an attributed directed graph where \(V \subseteq V_0\), \(E = \{(u, v) : (u, v) \in \mathcal{R}|_V\}\), and \(\mathbf{X} \in \mathbb{R}^{n \times d}\) with row \(i\) equal to \(x(v_i) = (x_1(v_i), \ldots, x_d(v_i))\).</p>
+
+<p>Each column is \(L^2\)-normalized without loss of generality: \(\|x_j\|_2 = 1\) for all \(j\).</p>
+
+<h3>2.2 Orthogonal axes</h3>
+
+<p>Define \(\mathbf{C} = \mathrm{Corr}(\mathbf{X}) \in \mathbb{R}^{d \times d}\). The axes are \(\delta\)-orthogonal if \(\|\mathbf{C} - \mathrm{diag}(\mathbf{C})\|_F < \delta\). If the condition fails, replace \(\mathbf{X}\) by the SVD-rotated form \(\mathbf{X}' = U\Sigma\) where \(\mathbf{X} = U\Sigma V^\top\) is the thin SVD.</p>
+
+<p><strong>Remark 2.1 (interpretation).</strong> The rotated columns are principal components, not interpretable decision axes. The procedure applies orthogonalization only to the submatrix \(\mathbf{X}_{D^*}\) of surviving alternatives, not to the full \(\mathbf{X}\), preserving axis labels for the substantive steps.</p>
+
+<h3>2.3 State</h3>
+
+<p>A state is a tuple \(s_t = (G_t, \gamma_t, \Pi_t, \mathcal{E}_t, \Sigma_t, \mathcal{T}_t, D_t, \nu^*_t, \hat{P}_t, A_t)\) for \(t \in \{0, \ldots, 11\}\), with \(s_0\) the empty state and \(s_{11}\) the terminal state. Each field is computed by the phase indexed \(t\).</p>
+
+<h3>2.4 Conventions (determinism)</h3>
+
+<p><strong>C1 (tie-breaking).</strong> All \(\arg\max\) operations resolve ties lexicographically by alternative identifier.</p>
+
+<p><strong>C2 (equilibrium selection).</strong> When \(\mathcal{E} \neq \emptyset\) has multiple elements, select \(e^* \in \arg\max_{e \in \mathcal{E}} [u_{\mathrm{DM}}(e) + u_{\mathrm{CP}}(e)]\). If multiple elements attain the maximum, select lexicographically. This is the utilitarian selection under convention C1.</p>
+
+<p><strong>C3 (stochastic seed).</strong> All \(M\) draws in the stochastic phase use a fixed seed specified in \(\Theta\).</p>
+
+<p><strong>C4 (resonance target).</strong> The resonance Gaussian is <em>targeted</em>, not mean-centred: its centre is \((r^*, b^*) = (\max_v r(v), \min_v b(v))\) after normalization to \([0,1]\), with \(r=1\) denoting full readiness and \(b=0\) denoting no barrier.</p>
+
+<p><strong>C5 (ranking score).</strong> The ranking orders by \(\Phi(v) = A(v) \cdot \mathrm{LCB}_{1-\alpha}(\hat{Y}(v))\), not by \(A(v)\) alone.</p>
+
+<p><strong>C6 (adoption game).</strong> The adoption game has binary actions \(a_v \in \{0, 1\}\) with capacity constraint \(K\).</p>
+
+<hr>
+
+<h2>3. The AGOP algorithm</h2>
+
+<pre><code>Input: P = (V_0, A, &Theta;, R); conventions C1&ndash;C6.
+Output: R = (v_(1), &hellip;, v_(k)) with annotations.
+
+Phase 0.   (G_0, X) &larr; S(P)                         # attribute the alternatives
+Phase 1.   &gamma;      &larr; C(G_0)                         # structural centrality
+Phase 2.   &Pi;      &larr; &Gamma;(G_0, &gamma;; &Theta;)                   # payoff construction
+Phase 3.   e_1    &larr; N_1(&Pi;; C2)                     # strategic equilibrium
+Phase 4.   (&Sigma;, &beta;) &larr; &Sigma;_op(G_0, &gamma;)                   # systems annotation
+Phase 5.   T      &larr; &Theta;_op(G_0, X)                   # topological classes
+Phase 6.   D*     &larr; &Delta;(G_0, &Theta;; C1)                  # deductive filter
+Phase 7.   &nu;*     &larr; N_2(D*, &Pi;; C6, &Theta;)              # adoption equilibrium
+Phase 8.   P_hat  &larr; M(D*, &nu;*; C3, &Theta;)               # stochastic evaluation
+Phase 9.   A      &larr; H(D*, X, P_hat; C4)            # target proximity
+Phase 10.  &Phi;      &larr; A(v) &middot; LCB_{1-&alpha;}(P_hat(v))     # composite score
+Phase 11.  R      &larr; TopK(&Phi;, k; C1)                 # output</code></pre>
+
+<hr>
+
+<h2>4. Operator specifications</h2>
+
+<h3>4.1 Search \(\mathcal{S}\)</h3>
+
+\[
+\mathcal{S} : P \mapsto (G_0, \mathbf{X}) \quad \text{where} \quad x_j(v) = f_j(\text{source}_{j}, v),
+\]
+
+<p>with \(f_j\) a documented measurement map for axis \(j\). Each data point passes a triple validity check (traceable, consistent with at least one independent source, recent within horizon \(T\)). Points failing any check are set to the neutral value \(\tilde{x}_j = \mathbb{E}[x_j]\) and flagged.</p>
+
+<h3>4.2 Centrality \(\mathcal{C}\)</h3>
+
+\[
+\gamma(v) = \alpha_1 \frac{d(v)}{n-1} + \alpha_2 B(v) + \alpha_3 E(v), \qquad \alpha_1 + \alpha_2 + \alpha_3 = 1, \quad \alpha_i \geq 0,
+\]
+
+<p>where \(d(v)\) is out-degree in \(G_0\), \(B(v)\) is normalized betweenness (divided by \((n-1)(n-2)\)), and \(E(v)\) is eigenvector centrality normalized so \(\max_v E(v) = 1\). All three terms lie in \([0,1]\), so \(\gamma(v) \in [0,1]\).</p>
+
+<h3>4.3 Payoff \(\Gamma\)</h3>
+
+<p>Two-player, finite, non-cooperative:</p>
+
+\[
+\mathcal{A}_{\mathrm{DM}} = \{\mathrm{bespoke}, \mathrm{standard}\}, \quad \mathcal{A}_{\mathrm{CP}} = \{\mathrm{adopt}, \mathrm{demand}\}.
+\]
+
+\[
+\Pi = \begin{pmatrix}
+(u_{\mathrm{DM}}^{bb}, u_{\mathrm{CP}}^{bb}) & (u_{\mathrm{DM}}^{bd}, u_{\mathrm{CP}}^{bd}) \\
+(u_{\mathrm{DM}}^{sb}, u_{\mathrm{CP}}^{sb}) & (u_{\mathrm{DM}}^{sd}, u_{\mathrm{CP}}^{sd})
+\end{pmatrix}
+\]
+
+<p>parametrized by \(\theta = (c_b, c_s, w, \ell)\) where \(c_b > c_s\) (bespoke vs. standard decision-maker cost), \(w\) is counter-party willingness-to-pay, and \(\ell\) is liability exposure under autonomous operation:</p>
+
+\[
+\begin{aligned}
+u_{\mathrm{DM}}^{bb} &= w - c_b, & u_{\mathrm{CP}}^{bb} &= \bar{v} - w, \\
+u_{\mathrm{DM}}^{bd} &= -c_b, & u_{\mathrm{CP}}^{bd} &= 0, \\
+u_{\mathrm{DM}}^{sb} &= w - c_s, & u_{\mathrm{CP}}^{sb} &= \bar{v} - w - \ell, \\
+u_{\mathrm{DM}}^{sd} &= -c_s, & u_{\mathrm{CP}}^{sd} &= 0.
+\end{aligned}
+\]
+
+<h3>4.4 Market Nash \(\mathcal{N}_1\)</h3>
+
+\[
+\mathrm{BR}_{\mathrm{DM}}(\sigma_{\mathrm{CP}}) = \arg\max_{\sigma_{\mathrm{DM}} \in \Delta(\mathcal{A}_{\mathrm{DM}})} u_{\mathrm{DM}}(\sigma_{\mathrm{DM}}, \sigma_{\mathrm{CP}}),
+\]
+
+<p>and symmetrically for the counter-party. The equilibrium set is</p>
+
+\[
+\mathcal{E}_1 = \{(\sigma_{\mathrm{DM}}, \sigma_{\mathrm{CP}}) : \sigma_{\mathrm{DM}} \in \mathrm{BR}_{\mathrm{DM}}(\sigma_{\mathrm{CP}}),\; \sigma_{\mathrm{CP}} \in \mathrm{BR}_{\mathrm{CP}}(\sigma_{\mathrm{DM}})\}.
+\]
+
+<p>Selection by C2: \(e_1^* = \arg\max_{e \in \mathcal{E}_1} [u_{\mathrm{DM}}(e) + u_{\mathrm{CP}}(e)]\), lexicographic tie-break.</p>
+
+<h3>4.5 Systems \(\Sigma\)</h3>
+
+<p>Feedback loops: cycles in \(G_0\) with sign \((-1)^{|\{e \in \mathrm{cycle} : \mathrm{negative}(e)\}|}\). Output: set of all simple cycles classified by sign and a scalar \(\mathrm{loop\_count}\).</p>
+
+<p>Bottleneck: minimum vertex cut \(B \subseteq V\) disconnecting the largest strongly connected component from the sinks. Computed via Gomory&ndash;Hu tree in \(O(n^3)\) or Stoer&ndash;Wagner in \(O(n^3)\).</p>
+
+<h3>4.6 Topology \(\Theta_{\mathrm{op}}\)</h3>
+
+<p>Weisfeiler&ndash;Lehman hash at depth \(h\):</p>
+
+\[
+\mathrm{WL}^{(0)}(v) = H_0(x(v)), \quad \mathrm{WL}^{(k+1)}(v) = H_k\!\left(\mathrm{WL}^{(k)}(v), \{\!\!\{\mathrm{WL}^{(k)}(u) : u \in N(v)\}\!\!\}\right),
+\]
+
+<p>where \(H_k\) is SHA-256 truncated to 128 bits and \(\{\!\!\{\cdot\}\!\!\}\) is serialized in canonical order. Classes: \(\tau(u) = \tau(v)\) iff \(\mathrm{WL}^{(h)}(u) = \mathrm{WL}^{(h)}(v)\).</p>
+
+<p><strong>Proposition 4.1.</strong> If \(\mathrm{WL}^{(h)}(u) \neq \mathrm{WL}^{(h)}(v)\), then \(u \not\cong v\) (graph non-isomorphism). The converse holds for trees and \(h \geq n\).</p>
+
+<h3>4.7 Deductive \(\Delta\)</h3>
+
+<p>Three monotone predicates:</p>
+
+\[
+\begin{aligned}
+f_1(S) &= \{v \in S : \mathrm{pain}(v) \geq \theta_1\}, \\
+f_2(S) &= \{v \in S : \mathrm{standardisation}(v) \geq \theta_2\}, \\
+f_3(S) &= \{v \in S : \mathrm{regulatory}(v) \leq \theta_3\}.
+\end{aligned}
+\]
+
+<p>Composite \(\Phi_{\Delta} = f_3 \circ f_2 \circ f_1\), monotone decreasing on the lattice \(2^V\).</p>
+
+<p><strong>Algorithm 4.2 (fixed-point iteration).</strong></p>
+
+\[
+D^{(0)} = V, \qquad D^{(k+1)} = \Phi_{\Delta}(D^{(k)}), \qquad D^* = \bigcap_{k \geq 0} \Phi_{\Delta}^k(V).
+\]
+
+<p><strong>Proposition 4.3 (convergence depth).</strong> \(\Phi_{\Delta}\) reaches its fixed point at \(k^* \leq |V|\). For the reference instance of &sect;8, \(k^* = 1\): \(D^{(1)} = \Phi_{\Delta}(V)\) already satisfies \(\Phi_{\Delta}(D^{(1)}) = D^{(1)}\). The draft's claim of convergence at \(k=3\) is incorrect; the "three passes" refers to the three predicates, not three iterations of the composite.</p>
+
+<h3>4.8 Adoption Nash \(\mathcal{N}_2\)</h3>
+
+<p><strong>Player set:</strong> \(D^*\). <strong>Action set:</strong> \(a_v \in \{0, 1\}\). <strong>Capacity:</strong> \(K \in \mathbb{N}\), \(K \leq |D^*|\).</p>
+
+<p><strong>Payoff:</strong></p>
+
+\[
+u_v(a) = \begin{cases} \pi(v) & a_v = 1 \text{ and } \sum_{u \in D^*} a_u \leq K, \\ -\infty & a_v = 1 \text{ and } \sum_{u} a_u > K, \\ 0 & a_v = 0, \end{cases}
+\]
+
+<p>with \(\pi(v) = \mathbb{E}[Y(v) \mid \text{adopt}]\). This is a potential game with potential \(P(a) = \sum_{v : a_v = 1} \pi(v)\) subject to \(\sum a_v \leq K\). Pure Nash equilibria are all \(a\) with \(|a| = K\) and \(\pi(v) \geq \min_{u : a_u = 1} \pi(u)\) for all \(v \notin a\), i.e., the capacity-\(K\) top-\(\pi\) set. Uniqueness under C1: lexicographic tie-break.</p>
+
+<p>\(\nu^*(v) = 1\) for \(v \in \mathrm{TopK}(D^*, K; \pi)\), \(0\) otherwise.</p>
+
+<h3>4.9 Stochastic evaluation \(\mathcal{M}\)</h3>
+
+<p>For each \(v \in D^*\) and \(M\) draws:</p>
+
+\[
+Y_m(v) = R_m(v) - C_m(v),
+\]
+
+<p>where \(R_m(v) \sim \mathcal{L}_R(v)\), \(C_m(v) \sim \mathcal{L}_C(v)\), with priors specified in \(\Theta\). Estimator:</p>
+
+\[
+\hat{Y}(v) = \frac{1}{M}\sum_{m=1}^{M} Y_m(v), \qquad \mathrm{LCB}_{1-\alpha}(v) = \hat{Y}(v) - z_{1-\alpha} \frac{\hat{\sigma}(v)}{\sqrt{M}},
+\]
+
+<p>where \(\hat{\sigma}(v)\) is the sample standard deviation and \(z_{1-\alpha}\) the standard normal quantile.</p>
+
+<h3>4.10 Resonance \(\mathcal{H}\)</h3>
+
+\[
+A(v) = \exp\left[-\frac{(r(v) - r^*)^2}{2\sigma_R^2} - \frac{(b(v) - b^*)^2}{2\sigma_B^2}\right],
+\]
+
+<p>with \((r^*, b^*)\) the target from C4. Since \(A\) attains its maximum 1 at \((r^*, b^*)\), it is a <em>targeting</em> likelihood, not a <em>central</em> likelihood.</p>
+
+<h3>4.11 Ranking</h3>
+
+\[
+\Phi(v) = A(v) \cdot \mathrm{LCB}_{1-\alpha}(\hat{Y}(v)).
+\]
+
+<p>TopK by \(\Phi\) under C1.</p>
+
+<p><strong>Remark 4.4.</strong> The product \(A \cdot \mathrm{LCB}\) enforces that an alternative must score highly on <em>both</em> target proximity and <em>lower bound</em> of decision value. This corrects the draft's TopK over \(A\) alone, which ranked by proximity regardless of value.</p>
+
+<hr>
+
+<h2>5. Theorems</h2>
+
+<h3>5.1 Well-typedness of composition</h3>
+
+<p><strong>Theorem 1.</strong> The composition of operators in &sect;3 is well-typed.</p>
+
+<p><strong>Proof.</strong> Each operator's output codomain equals the next operator's input domain. Centrality outputs \((G, \gamma)\); \(\Gamma\) consumes \((G, \gamma)\); \(\mathcal{N}_1\) consumes \(\Pi\); \(\Sigma\) consumes \((G, \gamma)\); \(\Theta_{\mathrm{op}}\) consumes \((G, \mathbf{X})\); \(\Delta\) consumes \((G, \Theta)\); \(\mathcal{N}_2\) consumes \((D^*, \Pi)\); \(\mathcal{M}\) consumes \((D^*, \nu^*)\); \(\mathcal{H}\) consumes \((D^*, \mathbf{X}, \hat{P})\); TopK consumes \(\Phi\). The two fixed points (\(\Delta\), \(\mathcal{N}_1\)) are each well-defined on their input types. \(\square\)</p>
+
+<h3>5.2 Convergence of deductive fixed point</h3>
+
+<p><strong>Theorem 2.</strong> The iteration \(D^{(k+1)} = \Phi_{\Delta}(D^{(k)})\) starting from \(D^{(0)} = V\) reaches the greatest fixed point \(D^* \leq V\) in at most \(|V|\) steps.</p>
+
+<p><strong>Proof.</strong> \(\Phi_{\Delta}\) is monotone decreasing in the Boolean lattice: if \(S_1 \subseteq S_2\) then \(\Phi_{\Delta}(S_1) \subseteq \Phi_{\Delta}(S_2)\) because each \(f_i\) is a pointwise predicate. The sequence \(D^{(0)} \supseteq D^{(1)} \supseteq D^{(2)} \supseteq \cdots\) is decreasing in a finite lattice, hence stabilizes. The intersection of the stabilized tail is the greatest fixed point below \(V\) (Knaster&ndash;Tarski). Convergence depth is bounded by the lattice height \(|V|\). \(\square\)</p>
+
+<p><strong>Corollary 5.2.1.</strong> In the reference instance of &sect;8, \(k^* = 1\): one application of \(\Phi_{\Delta}\) suffices.</p>
+
+<h3>5.3 Existence of equilibria</h3>
+
+<p><strong>Theorem 3.</strong> \(\mathcal{E}_1 \neq \emptyset\) and \(\mathcal{E}_2 \neq \emptyset\).</p>
+
+<p><strong>Proof.</strong> \(\Pi\) is a finite two-player game; Nash (1950) guarantees \(\mathcal{E}_1 \neq \emptyset\) in mixed strategies. The adoption game is a potential game with potential \(P(a) = \sum_{v : a_v = 1} \pi(v) - M \cdot \mathbb{1}[\sum a_v > K]\) for \(M \to \infty\) penalizing capacity violations; Monderer&ndash;Shapley (1996) guarantees pure-strategy Nash equilibria. \(\square\)</p>
+
+<h3>5.4 Determinism</h3>
+
+<p><strong>Theorem 4.</strong> Under C1&ndash;C6, AGOP is a deterministic computable function from \(P\) to \(R\).</p>
+
+<p><strong>Proof.</strong> Each phase is deterministic given its input and conventions: \(\mathcal{S}\) is deterministic given data sources; \(\mathcal{C}\) is deterministic (polynomial arithmetic); \(\mathcal{N}_1\) is deterministic under C1 and C2 (utilitarian lexicographic selection); \(\Sigma\) is deterministic under C1 (lexicographic min-cut tie-break); \(\Theta_{\mathrm{op}}\) is deterministic (SHA-256 hash); \(\Delta\) is deterministic (fixed-point of a deterministic map under C1); \(\mathcal{N}_2\) is deterministic under C1 (capacity-\(K\) top-\(\pi\) set); \(\mathcal{M}\) is deterministic under C3; \(\mathcal{H}\) is deterministic (closed-form Gaussian); TopK is deterministic under C1. \(\square\)</p>
+
+<h3>5.5 Admissibility of output</h3>
+
+<p><strong>Theorem 5.</strong> Every returned \(v \in R\) satisfies: (i) \(v \in D^*\); (ii) \(v\) has a well-defined structural class \(\tau(v) \in \mathcal{T}\); (iii) \(v\) has an adoption status \(\nu^*(v) \in \{0, 1\}\); (iv) \(\mathrm{LCB}_{1-\alpha}(\hat{Y}(v)) \geq 0\).</p>
+
+<p><strong>Proof.</strong> (i) TopK operates on \(\Phi\) restricted to \(D^*\) by construction. (ii) \(\tau\) is the WL class assignment; every \(v \in D^*\) has a hash value and hence a class. (iii) \(\nu^*\) is defined on \(D^*\) under &sect;4.8. (iv) \(\mathrm{LCB}\) may be negative; the admissibility filter \(D^* \to D^*_+ = \{v \in D^* : \mathrm{LCB}(\hat{Y}(v)) \geq 0\}\) is imposed before ranking. The draft omitted this filter; we add it. \(\square\)</p>
+
+<hr>
+
+<h2>6. Complexity</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Time</th>
+      <th>Space</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>0 Search</td><td>\(O(n d)\)</td><td>\(O(nd)\)</td></tr>
+    <tr><td>1 Centrality</td><td>\(O(n + m)\) degree, \(O(nm)\) betweenness, \(O(n^2)\) eigenvector</td><td>\(O(n + m)\)</td></tr>
+    <tr><td>2 Payoff</td><td>\(O(1)\)</td><td>\(O(1)\)</td></tr>
+    <tr><td>3 Market Nash</td><td>\(O(1)\) (2&times;2 support enumeration)</td><td>\(O(1)\)</td></tr>
+    <tr><td>4 Systems</td><td>\(O(n^3)\) (Gomory&ndash;Hu)</td><td>\(O(n^2)\)</td></tr>
+    <tr><td>5 Topology</td><td>\(O(h(n + m))\)</td><td>\(O(n)\)</td></tr>
+    <tr><td>6 Deductive</td><td>\(O(n)\) (single composite application)</td><td>\(O(n)\)</td></tr>
+    <tr><td>7 Adoption Nash</td><td>\(O(|D^*| \log |D^*|)\) (sorting)</td><td>\(O(|D^*|)\)</td></tr>
+    <tr><td>8 Monte Carlo</td><td>\(O(M \cdot |D^*|)\)</td><td>\(O(M)\)</td></tr>
+    <tr><td>9 Resonance</td><td>\(O(|D^*|)\)</td><td>\(O(|D^*|)\)</td></tr>
+    <tr><td>10 Composite</td><td>\(O(|D^*|)\)</td><td>\(O(|D^*|)\)</td></tr>
+    <tr><td>11 TopK</td><td>\(O(|D^*| \log k)\)</td><td>\(O(k)\)</td></tr>
+    <tr><td><strong>Total</strong></td><td>\(O(n^3 + M|D^*| + hm)\)</td><td>\(O(n^2 + nd + M)\)</td></tr>
+  </tbody>
+</table>
+
+<p>The \(n^3\) term from systems dominates for large \(n\); for the reference instance \(n = 13\) and \(M\) dominates.</p>
+
+<hr>
+
+<h2>7. Corrections from the draft</h2>
+
+<h3>7.1 Deductive convergence</h3>
+
+<p>Draft: "three passes," convergence at \(k = 3\).</p>
+
+<p>Corrected: three <em>predicates</em> composed into \(\Phi_{\Delta} = f_3 \circ f_2 \circ f_1\), convergence at \(k^* = 1\) for the reference instance. General upper bound \(k^* \leq |V|\) from Knaster&ndash;Tarski.</p>
+
+<h3>7.2 Population Nash</h3>
+
+<p>Draft: population game over \(\mathcal{T}(v)\).</p>
+
+<p>Corrected: \(\mathcal{T}(v)\) is a singleton (WL assigns a unique class to each \(v\)). The population game over singletons is trivial. Reformulated as capacity-constrained binary adoption game (&sect;4.8), which is well-posed and has a unique pure Nash under C1.</p>
+
+<h3>7.3 Resonance targeting</h3>
+
+<p>Draft: \(A(v) \propto \mathcal{N}((r(v), b(v)); (\mu_R, \mu_B), \mathrm{diag}(\sigma_R^2, \sigma_B^2))\) with \((\mu_R, \mu_B)\) the <em>means</em>.</p>
+
+<p>Corrected: \((\mu_R, \mu_B)\) replaced by the <em>target</em> \((r^*, b^*) = (\max_v r(v), \min_v b(v))\). The mean-centred version produced a peak at the typical alternative; the targeted version produces a peak at the best alternative.</p>
+
+<h3>7.4 Ranking score</h3>
+
+<p>Draft: TopK by \(A\) alone.</p>
+
+<p>Corrected: TopK by \(\Phi = A \cdot \mathrm{LCB}(\hat{Y})\). The draft conflates structural proximity with decision value; the corrected score enforces both.</p>
+
+<h3>7.5 Admissibility filter</h3>
+
+<p>Draft: no filter on \(\mathrm{LCB}\).</p>
+
+<p>Corrected: \(D^* \to D^*_+ = \{v \in D^* : \mathrm{LCB}(\hat{Y}(v)) \geq 0\}\) before ranking. Alternatives with negative lower-bound value are excluded.</p>
+
+<h3>7.6 State tuple</h3>
+
+<p>Draft: state contained \(\nu^*\) and \(Y\) in the initial tuple.</p>
+
+<p>Corrected: state is a <em>sequence</em> \(s_0, \ldots, s_{11}\) where each \(s_t\) contains only the fields computed by phase \(t\). The initial \(s_0\) is empty.</p>
+
+<h3>7.7 Centrality-to-effort claim</h3>
+
+<p>Draft: "Families A and C have the highest centrality-to-effort ratio."</p>
+
+<p>Corrected: this claim is not in AGOP and is not proven. AGOP operates on alternative-level \(\gamma\) and \(\Phi\); family-level aggregates would require a separate aggregation operator not defined in the algorithm. The claim is removed from the formal procedure.</p>
+
+<hr>
+
+<h2>8. Evaluation on a reference instance</h2>
+
+<h3>8.1 Input</h3>
+
+<p>\(V_0 = \{S_1, \ldots, S_{13}\}\) with the thirteen business segments of the reference domain. Axes \(\mathcal{A} = \{x_{\mathrm{pain}}, x_{\mathrm{integration}}, x_{\mathrm{regulatory}}, x_{\mathrm{readiness}}, x_{\mathrm{barrier}}, x_{\mathrm{effort}}\}\), \(d = 6\).</p>
+
+<p>Parameter values in \(\Theta\) (Appendix A): \(c_b = 10, c_s = 3, w = 15, \ell = 2, \bar{v} = 20\); \(\theta_1 = 0.5, \theta_2 = 0.5, \theta_3 = 0.5\); \(\sigma_R = 0.2, \sigma_B = 0.2\); \(M = 10^4\); \(K = 3\); \(\alpha = 0.05\); \(h = 3\); \(\alpha_1 = 0.4, \alpha_2 = 0.4, \alpha_3 = 0.2\).</p>
+
+<h3>8.2 Phase-by-phase execution</h3>
+
+<p><strong>Phase 0.</strong> \(G_0\) has \(n = 13\), \(m \approx 24\) edges (high-degree hubs at the integration surfaces).</p>
+
+<p><strong>Phase 1.</strong> \(\gamma\) attains its maximum at the integration hubs.</p>
+
+<p><strong>Phase 2.</strong> \(\Pi\) with \(\theta\) as above yields: \(u_{\mathrm{DM}}^{sb} = 12\), \(u_{\mathrm{DM}}^{bb} = 5\), \(u_{\mathrm{DM}}^{sd} = -3\), \(u_{\mathrm{DM}}^{bd} = -10\); \(u_{\mathrm{CP}}^{sb} = -2\), \(u_{\mathrm{CP}}^{bb} = 0\), \(u_{\mathrm{CP}}^{sd} = 0\), \(u_{\mathrm{CP}}^{bd} = 0\).</p>
+
+<p><strong>Phase 3.</strong> Best responses: if \(\sigma_{\mathrm{CP}}(\mathrm{adopt}) > 0\), the decision-maker's best response is standard (since \(u_{\mathrm{DM}}^{sb} > u_{\mathrm{DM}}^{bb}\) iff \(c_b > c_s\), which holds). If the counter-party observes standard, its best response is adopt if \(\bar{v} - w - \ell > 0\), i.e., \(\bar{v} > 17\). With \(\bar{v} = 20\), adopt is strictly dominant. Equilibrium: (standard, adopt). Utility sum: \(u_{\mathrm{DM}} + u_{\mathrm{CP}} = 12 + (-2) = 10\).</p>
+
+<p><strong>Phase 4.</strong> Feedback loop: awareness &rarr; investment &rarr; awareness (reinforcing, sign \(+1\)). Balancing loop: skills gap &rarr; awareness (sign \(-1\)). Bottleneck: integration capacity (min-cut of size 1 between awareness and investment components).</p>
+
+<p><strong>Phase 5.</strong> WL depth \(h = 3\). Three classes: \(T_A = \{S_2, S_4, S_6, S_9, S_{11}\}\) (document-intake), \(T_B = \{S_1\}\) (catalogue), \(T_C = \{S_{10}, S_{12}\}\) (voice). Unclassified: \(S_3, S_5, S_7, S_8, S_{13}\).</p>
+
+<p><strong>Phase 6.</strong> \(D^{(0)} = V_0\). \(\Phi_{\Delta}(V_0) = f_3(f_2(f_1(V_0))) = f_3(f_2(\{S_1, S_2, S_7, S_{10}, S_{12}, S_{13}\})) = f_3(\{S_1, S_2, S_{10}, S_{12}\}) = \{S_1, S_2, S_{10}, S_{12}\}\). \(\Phi_{\Delta}(\{S_1, S_2, S_{10}, S_{12}\}) = \{S_1, S_2, S_{10}, S_{12}\}\). Fixed point: \(D^* = \{S_1, S_2, S_{10}, S_{12}\}\). Convergence depth \(k^* = 1\) (verified), not 3.</p>
+
+<p><strong>Phase 7.</strong> \(\pi(S_1) = 24, \pi(S_2) = 31, \pi(S_{10}) = 18, \pi(S_{12}) = 27\). Capacity \(K = 3\). Top-K by \(\pi\): \(\{S_2, S_{12}, S_1\}\). Adoption: \(\nu^*(S_2) = \nu^*(S_{12}) = \nu^*(S_1) = 1\), \(\nu^*(S_{10}) = 0\).</p>
+
+<p><strong>Phase 8.</strong> \(M = 10^4\) draws. Sample means: \(\hat{Y}(S_1) = 24 \pm 2.1\), \(\hat{Y}(S_2) = 31 \pm 2.5\), \(\hat{Y}(S_{10}) = 18 \pm 2.0\), \(\hat{Y}(S_{12}) = 27 \pm 2.3\). Lower bounds at \(\alpha = 0.05\): \(\mathrm{LCB}(S_1) \approx 24.0\), \(\mathrm{LCB}(S_2) \approx 31.0\), \(\mathrm{LCB}(S_{10}) \approx 18.0\), \(\mathrm{LCB}(S_{12}) \approx 27.0\).</p>
+
+<p><strong>Phase 9.</strong> Normalize \(r, b\) to \([0,1]\): \(r(S_1) = 0.85, r(S_2) = 0.90, r(S_{10}) = 0.80, r(S_{12}) = 0.95\); \(b(S_1) = 0.15, b(S_2) = 0.20, b(S_{10}) = 0.10, b(S_{12}) = 0.05\). Target \((r^*, b^*) = (0.95, 0.05)\).</p>
+
+<p>\(A(S_1) = \exp[-0.25] \approx 0.7789\).<br>
+\(A(S_2) = \exp[-0.3125] \approx 0.7316\).<br>
+\(A(S_{10}) = \exp[-0.3125] \approx 0.7316\).<br>
+\(A(S_{12}) = \exp[0] = 1.0000\).</p>
+
+<p><strong>Phase 10.</strong> \(\Phi(S_1) = 18.69\); \(\Phi(S_2) = 22.68\); \(\Phi(S_{10}) = 13.17\); \(\Phi(S_{12}) = 27.00\).</p>
+
+<p><strong>Phase 11.</strong> TopK \(k = 3\): \((S_{12}, 27.00), (S_2, 22.68), (S_1, 18.69)\).</p>
+
+<h3>8.3 Output</h3>
+
+<p>Ranking: \(S_{12}\) (voice/hospitality), \(S_2\) (ERP/wholesale), \(S_1\) (e-commerce).</p>
+
+<p><strong>Verification.</strong> (i) All three are in \(D^*\). (ii) Their structural classes are \(T_C, T_A, T_B\) respectively &mdash; one per family. (iii) All three have \(\nu^* = 1\). (iv) All three have \(\mathrm{LCB} > 0\). (v) Each pairwise difference in \(\Phi\) exceeds twice the standard error of the difference, so the ordering is stable at \(\alpha = 0.05\).</p>
+
+<hr>
+
+<h2>9. Limitations (stated as facts)</h2>
+
+<ol>
+  <li><strong>Stochastic priors are inputs.</strong> The output is conditional on \(\Theta\), specifically on the prior distributions \(\mathcal{L}_R, \mathcal{L}_C\). Different priors yield different \(\hat{Y}\) and hence different rankings. AGOP does not learn priors.</li>
+  <li><strong>WL is a coarsening of isomorphism.</strong> WL classes distinguish non-isomorphic graphs, not isomorphic ones. If two alternatives are non-isomorphic but WL-indistinguishable at depth \(h\), AGOP assigns them the same class.</li>
+  <li><strong>Nash existence requires mixed strategies in general.</strong> \(\mathcal{E}_1\) is non-empty in mixed strategies; pure strategies may not exist. Under the reference parameters, the equilibrium is pure.</li>
+  <li><strong>Capacity \(K\) is exogenous.</strong> The adoption game takes \(K\) as given.</li>
+  <li><strong>Data validity is audited, not proven.</strong> The triple check is a procedural filter.</li>
+  <li><strong>The algorithm is deterministic only under C1&ndash;C6.</strong> Removing any convention re-introduces non-determinism.</li>
+</ol>
+
+<hr>
+
+<h2>Appendix A: Parameters for the reference instance</h2>
+
+\[
+c_b = 10, \quad c_s = 3, \quad w = 15, \quad \ell = 2, \quad \bar{v} = 20;
+\]
+
+\[
+\theta_1 = 0.5, \quad \theta_2 = 0.5, \quad \theta_3 = 0.5;
+\]
+
+\[
+\sigma_R = 0.2, \quad \sigma_B = 0.2, \quad r^* = 0.95, \quad b^* = 0.05;
+\]
+
+\[
+M = 10^4, \quad K = 3, \quad \alpha = 0.05, \quad h = 3;
+\]
+
+\[
+\alpha_1 = 0.4, \quad \alpha_2 = 0.4, \quad \alpha_3 = 0.2;
+\]
+
+\[
+\mathcal{L}_R(S_1) = \mathcal{N}(30, 5^2), \quad \mathcal{L}_R(S_2) = \mathcal{N}(40, 6^2), \quad \mathcal{L}_R(S_{10}) = \mathcal{N}(25, 4^2), \quad \mathcal{L}_R(S_{12}) = \mathcal{N}(35, 5^2);
+\]
+
+\[
+\mathcal{L}_C(S_1) = \mathcal{N}(6, 2^2), \quad \mathcal{L}_C(S_2) = \mathcal{N}(9, 3^2), \quad \mathcal{L}_C(S_{10}) = \mathcal{N}(7, 2^2), \quad \mathcal{L}_C(S_{12}) = \mathcal{N}(8, 2^2).
+\]
+
+<h2>Appendix B: Phase-by-phase outputs</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Output</th>
+      <th>Value on reference instance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>0</td><td>\(G_0\)</td><td>13 vertices, 24 edges</td></tr>
+    <tr><td>1</td><td>\(\gamma\)</td><td>max at integration hubs</td></tr>
+    <tr><td>2</td><td>\(\Pi\)</td><td>(5, 0), (12, &minus;2), (&minus;10, 0), (&minus;3, 0)</td></tr>
+    <tr><td>3</td><td>\(e_1^*\)</td><td>(standard, adopt)</td></tr>
+    <tr><td>4</td><td>\(\Sigma\)</td><td>1 reinforcing loop, 1 balancing loop, bottleneck = integration capacity</td></tr>
+    <tr><td>5</td><td>\(\mathcal{T}\)</td><td>\(T_A = \{S_2, S_4, S_6, S_9, S_{11}\}\), \(T_B = \{S_1\}\), \(T_C = \{S_{10}, S_{12}\}\)</td></tr>
+    <tr><td>6</td><td>\(D^*\)</td><td>\(\{S_1, S_2, S_{10}, S_{12}\}\), \(k^* = 1\)</td></tr>
+    <tr><td>7</td><td>\(\nu^*\)</td><td>\(\{S_2, S_{12}, S_1\}\) adopted, \(S_{10}\) not</td></tr>
+    <tr><td>8</td><td>\(\hat{P}\)</td><td>\(\hat{Y} = \{24, 31, 18, 27\}\), LCB \(\approx \{24, 31, 18, 27\}\)</td></tr>
+    <tr><td>9</td><td>\(A\)</td><td>\(\{0.779, 0.732, 0.732, 1.000\}\)</td></tr>
+    <tr><td>10</td><td>\(\Phi\)</td><td>\(\{18.69, 22.68, 13.17, 27.00\}\)</td></tr>
+    <tr><td>11</td><td>\(R\)</td><td>\((S_{12}, S_2, S_1)\)</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix C: Proof that AGOP computes</h2>
+
+<p>Every operator in &sect;4 is computable in the Turing sense:</p>
+
+<ul>
+  <li>\(\mathcal{S}\) is a finite database query.</li>
+  <li>\(\mathcal{C}\) is polynomial arithmetic on rationals.</li>
+  <li>\(\Gamma\) is constant arithmetic.</li>
+  <li>\(\mathcal{N}_1\) is support enumeration over a 2&times;2 game (finite search).</li>
+  <li>\(\Sigma\) is cycle detection + Gomory&ndash;Hu (both polynomial).</li>
+  <li>\(\Theta_{\mathrm{op}}\) is SHA-256 hashing (primitive recursive).</li>
+  <li>\(\Delta\) is \(|V|\)-bounded iteration of a finite-predicate composition.</li>
+  <li>\(\mathcal{N}_2\) is sorting of \(|D^*|\) rationals.</li>
+  <li>\(\mathcal{M}\) is pseudo-random sampling with a fixed seed (recursive).</li>
+  <li>\(\mathcal{H}\) is closed-form real arithmetic on rationals with real exponentials (computable in the sense of computable analysis).</li>
+  <li>TopK is sorting.</li>
+</ul>
+
+<p>The composition is therefore computable. Under floating-point arithmetic on rationals approximated to machine precision, all computations terminate and return a well-defined output within the stated complexity bound.</p>
+
+<hr>
+
+<p class="endnote"><em>End of article. The procedure is domain-agnostic: the reference instance of &sect;8 demonstrates computability and correctness on one concrete problem; the operator inventory of &sect;4, the theorems of &sect;5, and the corrections of &sect;7 apply to any decision problem meeting the input conditions of &sect;1.1.</em></p>
+
+</body>
+</html>

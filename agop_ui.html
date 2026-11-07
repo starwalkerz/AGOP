@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGOP Decision Engine</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #666;
+    --accent: #0a4d8c;
+    --accent-soft: #e8f0f8;
+    --good: #2d6a2d;
+    --good-soft: #d4ecd4;
+    --rule: #e0e0e0;
+    --warn: #b00020;
+    --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Charter", "Georgia", "Iowan Old Style", "Times New Roman", serif;
+    line-height: 1.55;
+  }
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--rule);
+    padding: 1.4em 2em;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.7em;
+    color: var(--accent);
+  }
+  header p {
+    margin: 0.3em 0 0;
+    color: var(--muted);
+    font-size: 0.95em;
+  }
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2em;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5em;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.4em 1.5em;
+  }
+  .panel h2 {
+    margin: 0 0 0.6em;
+    font-size: 1.1em;
+    color: var(--accent);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.4em;
+  }
+  .panel-full { grid-column: 1 / -1; }
+  .hidden { display: none; }
+  label {
+    display: block;
+    margin: 0.5em 0;
+    cursor: pointer;
+    font-size: 0.95em;
+  }
+  input[type="radio"] { margin-right: 0.4em; }
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    font-family: var(--mono);
+    font-size: 0.8em;
+    padding: 0.6em;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    resize: vertical;
+    background: #fafafa;
+  }
+  button {
+    background: var(--accent);
+    color: white;
+    border: 0;
+    border-radius: 4px;
+    padding: 0.7em 1.4em;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.8em;
+  }
+  button:disabled {
+    background: var(--muted);
+    cursor: wait;
+  }
+  .error {
+    color: var(--warn);
+    font-family: var(--mono);
+    font-size: 0.85em;
+    margin-top: 0.8em;
+    padding: 0.6em;
+    background: #fdecee;
+    border-left: 3px solid var(--warn);
+    border-radius: 3px;
+  }
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.8em;
+    margin-bottom: 1.2em;
+  }
+  .stat {
+    background: var(--accent-soft);
+    border-radius: 6px;
+    padding: 0.8em 1em;
+  }
+  .stat .label {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .stat .value {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: var(--mono);
+    word-break: break-word;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9em;
+    margin: 0.6em 0 1.2em;
+  }
+  th, td {
+    border-bottom: 1px solid var(--rule);
+    padding: 0.4em 0.6em;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #f4f6f8;
+    font-weight: 600;
+  }
+  tr.selected { background: var(--good-soft); }
+  code, .mono { font-family: var(--mono); font-size: 0.88em; }
+  h3 {
+    font-size: 1em;
+    margin: 1.2em 0 0.4em;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  #chart {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid var(--rule);
+    background: white;
+    display: block;
+  }
+  .chart-placeholder {
+    padding: 3em 1em;
+    text-align: center;
+    color: var(--muted);
+    border: 2px dashed var(--rule);
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AGOP Decision Engine</h1>
+  <p>A computable decision procedure for multi-criteria selection under uncertainty.</p>
+</header>
+
+<main>
+
+  <!-- INPUT -->
+  <section class="panel" id="input-panel">
+    <h2>1. Input</h2>
+    <label><input type="radio" name="input-mode" value="preset" checked> Reference instance</label>
+    <label><input type="radio" name="input-mode" value="custom"> Custom problem (JSON)</label>
+    <textarea id="custom-json" class="hidden" placeholder='Paste a full ProblemSpec (see /docs for schema).'></textarea>
+    <div>
+      <button id="run-btn">Run AGOP</button>
+    </div>
+    <div id="error" class="error hidden"></div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="panel" id="summary-panel">
+    <h2>2. Summary</h2>
+    <div id="summary" class="summary">
+      <div class="stat"><div class="label">Status</div><div class="value">idle</div></div>
+    </div>
+  </section>
+
+  <!-- RANKING & PHASES -->
+  <section class="panel panel-full hidden" id="results-panel">
+    <h2>3. Results</h2>
+    <h3>Ranking</h3>
+    <table id="ranking-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Alternative</th>
+          <th>Family τ</th>
+          <th>Φ = A · LCB</th>
+          <th>A (resonance)</th>
+          <th>LCB (Ŷ)</th>
+          <th>Adoption ν*</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Survivor set D*</h3>
+    <table id="survivor-table">
+      <thead>
+        <tr>
+          <th>Alternative</th>
+          <th>Ŷ</th>
+          <th>LCB</th>
+          <th>A</th>
+          <th>Φ</th>
+          <th>Selected</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Phase trace</h3>
+    <table id="phase-table">
+      <thead>
+        <tr><th>Phase</th><th>Value</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- CHART -->
+  <section class="panel panel-full hidden" id="chart-panel">
+    <h2>4. Visualisation</h2>
+    <img id="chart" alt="AGOP 4-panel chart" />
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const runBtn      = document.getElementById('run-btn');
+  const errorBox    = document.getElementById('error');
+  const customJson  = document.getElementById('custom-json');
+  const summary     = document.getElementById('summary');
+  const resultsPanel = document.getElementById('results-panel');
+  const chartPanel   = document.getElementById('chart-panel');
+  const chartImg     = document.getElementById('chart');
+
+  let chartUrl = null;
+
+  function mode() {
+    return document.querySelector('input[name="input-mode"]:checked').value;
+  }
+
+  document.querySelectorAll('input[name="input-mode"]').forEach(r => {
+    r.addEventListener('change', () => {
+      customJson.classList.toggle('hidden', mode() !== 'custom');
+    });
+  });
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.remove('hidden');
+  }
+  function clearError() {
+    errorBox.classList.add('hidden');
+    errorBox.textContent = '';
+  }
+
+  function buildBody() {
+    if (mode() === 'preset') {
+      return { preset: 'reference' };
+    }
+    const parsed = JSON.parse(customJson.value);
+    return { problem: parsed };
+  }
+
+  function setStatus(text) {
+    summary.innerHTML = `
+      <div class="stat"><div class="label">Status</div><div class="value">${text}</div></div>
+    `;
+  }
+
+  function renderSummary(data) {
+    const rank = data.ranking.join(' &gt; ');
+    const ds   = data.D_star.join(', ');
+    const cd   = data.convergence_depth;
+    const eqDM = data.nash.sigma_DM;
+    const eqCP = data.nash.sigma_CP;
+    const eqLbl = (s, labels) => {
+      const i = s.indexOf(Math.max(...s));
+      return `${labels[i]} (${(Math.max(...s)).toFixed(2)})`;
+    };
+
+    summary.innerHTML = `
+      <div class="stat"><div class="label">Ranking</div><div class="value">${rank}</div></div>
+      <div class="stat"><div class="label">Survivors |D*|</div><div class="value">${data.D_star.length}</div></div>
+      <div class="stat"><div class="label">Top-K |R|</div><div class="value">${data.ranking.length}</div></div>
+      <div class="stat"><div class="label">Convergence depth</div><div class="value">${cd}</div></div>
+      <div class="stat"><div class="label">Market Nash — DM</div><div class="value">${eqLbl(eqDM, ['bespoke', 'standard'])}</div></div>
+      <div class="stat"><div class="label">Market Nash — CP</div><div class="value">${eqLbl(eqCP, ['adopt', 'demand'])}</div></div>
+    `;
+  }
+
+  function renderRanking(data) {
+    const tbody = document.querySelector('#ranking-table tbody');
+    tbody.innerHTML = '';
+    data.ranking.forEach((v, idx) => {
+      const tr = document.createElement('tr');
+      tr.className = 'selected';
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td class="mono">${v}</td>
+        <td class="mono">${data.topology[v] ?? ''}</td>
+        <td class="mono">${data.composite[v].toFixed(3)}</td>
+        <td class="mono">${data.resonance[v].toFixed(4)}</td>
+        <td class="mono">${data.monte_carlo.LCB[v].toFixed(3)}</td>
+        <td class="mono">${data.adoption[v]}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderSurvivors(data) {
+    const tbody = document.querySelector('#survivor-table tbody');
+    tbody.innerHTML = '';
+    data.D_star.forEach(v => {
+      const tr = document.createElement('tr');
+      const selected = data.ranking.includes(v);
+      if (selected) tr.className = 'selected';
+      const phi = data.composite[v] !== undefined ? data.composite[v].toFixed(3) : '—';
+      tr.innerHTML = `
+        <td class="mono">${v}</td>
+        <td class="mono">${data.monte_carlo.Y_hat[v].toFixed(3)}</td>
+        <td class="mono">${data.monte_carlo.LCB[v].toFixed(3)}</td>
+        <td class="mono">${data.resonance[v].toFixed(4)}</td>
+        <td class="mono">${phi}</td>
+        <td class="mono">${selected ? '✓' : ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderPhases(data) {
+    const tbody = document.querySelector('#phase-table tbody');
+    const rows = [
+      ['0. G_0 edges',         '— (see chart)'],
+      ['3. Nash σ_DM',         JSON.stringify(data.nash.sigma_DM)],
+      ['3. Nash σ_CP',         JSON.stringify(data.nash.sigma_CP)],
+      ['4. Loops (total)',     data.systems.loop_count],
+      ['4. Reinforcing',       data.systems.reinforcing],
+      ['4. Balancing',         data.systems.balancing],
+      ['4. Bottleneck size',   data.systems.bottleneck_size],
+      ['6. Convergence depth', data.convergence_depth],
+      ['6. |D*|',              data.D_star.length],
+      ['7. Adopted',           Object.entries(data.adoption).filter(([_, v]) => v === 1).map(([k]) => k).join(', ')],
+      ['11. |R|',              data.ranking.length],
+    ];
+    tbody.innerHTML = '';
+    rows.forEach(([k, v]) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${k}</td><td class="mono">${v}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function fetchChart(body) {
+    if (chartUrl) {
+      URL.revokeObjectURL(chartUrl);
+      chartUrl = null;
+    }
+    const resp = await fetch('/api/agop/chart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+      throw new Error(err.detail || `HTTP ${resp.status}`);
+    }
+    const blob = await resp.blob();
+    chartUrl = URL.createObjectURL(blob);
+    chartImg.src = chartUrl;
+  }
+
+  runBtn.addEventListener('click', async () => {
+    clearError();
+    runBtn.disabled = true;
+    setStatus('running…');
+    resultsPanel.classList.add('hidden');
+    chartPanel.classList.add('hidden');
+
+    try {
+      const body = buildBody();
+
+      const resp = await fetch('/api/agop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+        throw new Error(err.detail || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+
+      renderSummary(data);
+      renderRanking(data);
+      renderSurvivors(data);
+      renderPhases(data);
+
+      resultsPanel.classList.remove('hidden');
+
+      await fetchChart(body);
+      chartPanel.classList.remove('hidden');
+    } catch (e) {
+      showError(e.message || String(e));
+      setStatus('error');
+    } finally {
+      runBtn.disabled = false;
+    }
+  });
+
+  // Auto-run reference on first load
+  runBtn.click();
+})();
+</script>
+</body>
+</html>

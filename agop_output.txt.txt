@@ -1,0 +1,82 @@
+======================================================================
+AGOP: Reference Instance — Full Trace
+======================================================================
+
+Phase 0. G: 13 nodes, 24 edges
+
+Phase 1. γ (top 5 by centrality):
+  γ(S_2) = 0.8543
+  γ(S_1) = 0.5121
+  γ(S_10) = 0.4098
+  γ(S_11) = 0.2847
+  γ(S_12) = 0.1403
+
+Phase 2. Payoff matrix Π:
+  U_DM = [[5.0, -10.0], [12.0, -3.0]]
+  U_CP = [[5.0, 0.0], [3.0, 0.0]]
+
+Phase 3. Market Nash e_1* = (σ_DM, σ_CP):
+  σ_DM = [0.0, 1.0]  (0 = bespoke, 1 = standard)
+  σ_CP = [1.0, 0.0]  (0 = adopt,   1 = demand)
+  total payoff = 15.0000
+
+Phase 4. Systems Σ:
+  loop_count: 10
+  reinforcing: 9
+  balancing: 1
+  bottleneck_size: 1
+  bottleneck: {'S_10'}
+
+Phase 5. Topology T:
+  τ(S_1)  = B
+  τ(S_10) = C
+  τ(S_11) = A
+  τ(S_12) = C
+  τ(S_13) = other
+  τ(S_2)  = A
+  τ(S_3)  = other
+  τ(S_4)  = A
+  τ(S_5)  = other
+  τ(S_6)  = A
+  τ(S_7)  = other
+  τ(S_8)  = other
+  τ(S_9)  = A
+
+Phase 6. Deductive D* = ['S_1', 'S_10', 'S_12', 'S_2']
+
+Phase 7. Adoption ν*:
+  ν*(S_1)  = 1
+  ν*(S_10) = 0
+  ν*(S_12) = 1
+  ν*(S_2)  = 1
+
+Phase 8. Monte Carlo Ŷ and LCB (α = 0.05, M = 10^4):
+  S_1:  Ŷ =  24.043,  LCB =  23.951
+  S_10: Ŷ =  17.988,  LCB =  17.914
+  S_12: Ŷ =  27.021,  LCB =  26.933
+  S_2:  Ŷ =  30.973,  LCB =  30.863
+
+Phase 9. Resonance A:
+  A(S_1)  = 0.7788
+  A(S_10) = 0.7316
+  A(S_12) = 1.0000
+  A(S_2)  = 0.7316
+
+Phase 10. Composite Φ = A · LCB:
+  Φ(S_12) =  26.933
+  Φ(S_2)  =  22.578
+  Φ(S_1)  =  18.653
+  Φ(S_10) =  13.106
+
+Phase 11. Final ranking R = ['S_12', 'S_2', 'S_1']
+
+======================================================================
+Assertions
+======================================================================
+  [PASS] D* = {S_1, S_2, S_10, S_12}
+  [PASS] R  = ['S_12', 'S_2', 'S_1']
+  [PASS] All LCB > 0
+  [PASS] All selected ν* = 1
+  [PASS] Market Nash = (standard, adopt)
+
+All assertions passed.
