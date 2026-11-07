@@ -6,172 +6,111 @@
 <title>AGOP Decision Engine</title>
 <style>
   :root {
-    --bg: #f6f7f9;
-    --panel: #ffffff;
-    --ink: #1a1a1a;
-    --muted: #666;
-    --accent: #0a4d8c;
-    --accent-soft: #e8f0f8;
-    --good: #2d6a2d;
-    --good-soft: #d4ecd4;
-    --rule: #e0e0e0;
-    --warn: #b00020;
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #1a1a1a; --muted: #666;
+    --accent: #0a4d8c; --accent-soft: #e8f0f8;
+    --good: #2d6a2d; --good-soft: #d4ecd4;
+    --rule: #e0e0e0; --warn: #b00020;
     --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
+    margin: 0; background: var(--bg); color: var(--ink);
     font-family: "Charter", "Georgia", "Iowan Old Style", "Times New Roman", serif;
     line-height: 1.55;
   }
   header {
-    background: var(--panel);
-    border-bottom: 1px solid var(--rule);
+    background: var(--panel); border-bottom: 1px solid var(--rule);
     padding: 1.4em 2em;
   }
-  header h1 {
-    margin: 0;
-    font-size: 1.7em;
-    color: var(--accent);
-  }
-  header p {
-    margin: 0.3em 0 0;
-    color: var(--muted);
-    font-size: 0.95em;
-  }
+  header h1 { margin: 0; font-size: 1.7em; color: var(--accent); }
+  header p { margin: 0.3em 0 0; color: var(--muted); font-size: 0.95em; }
   main {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 2em;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5em;
+    max-width: 1400px; margin: 0 auto; padding: 2em;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em;
   }
-  @media (max-width: 900px) {
-    main { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
   .panel {
-    background: var(--panel);
-    border: 1px solid var(--rule);
-    border-radius: 8px;
-    padding: 1.4em 1.5em;
+    background: var(--panel); border: 1px solid var(--rule);
+    border-radius: 8px; padding: 1.4em 1.5em;
   }
   .panel h2 {
-    margin: 0 0 0.6em;
-    font-size: 1.1em;
-    color: var(--accent);
-    border-bottom: 1px solid var(--rule);
-    padding-bottom: 0.4em;
+    margin: 0 0 0.6em; font-size: 1.1em; color: var(--accent);
+    border-bottom: 1px solid var(--rule); padding-bottom: 0.4em;
   }
   .panel-full { grid-column: 1 / -1; }
   .hidden { display: none; }
-  label {
-    display: block;
-    margin: 0.5em 0;
-    cursor: pointer;
-    font-size: 0.95em;
-  }
+  label { display: block; margin: 0.5em 0; cursor: pointer; font-size: 0.95em; }
   input[type="radio"] { margin-right: 0.4em; }
   textarea {
-    width: 100%;
-    min-height: 160px;
-    font-family: var(--mono);
-    font-size: 0.8em;
-    padding: 0.6em;
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    resize: vertical;
-    background: #fafafa;
+    width: 100%; min-height: 160px; font-family: var(--mono);
+    font-size: 0.8em; padding: 0.6em; border: 1px solid var(--rule);
+    border-radius: 4px; resize: vertical; background: #fafafa;
   }
   button {
-    background: var(--accent);
-    color: white;
-    border: 0;
-    border-radius: 4px;
-    padding: 0.7em 1.4em;
-    font-size: 0.95em;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 0.8em;
+    background: var(--accent); color: white; border: 0; border-radius: 4px;
+    padding: 0.7em 1.4em; font-size: 0.95em; font-weight: 600;
+    cursor: pointer; margin-top: 0.8em;
   }
-  button:disabled {
-    background: var(--muted);
-    cursor: wait;
-  }
+  button:disabled { background: var(--muted); cursor: wait; }
   .error {
-    color: var(--warn);
-    font-family: var(--mono);
-    font-size: 0.85em;
-    margin-top: 0.8em;
-    padding: 0.6em;
-    background: #fdecee;
-    border-left: 3px solid var(--warn);
-    border-radius: 3px;
+    color: var(--warn); font-family: var(--mono); font-size: 0.85em;
+    margin-top: 0.8em; padding: 0.6em; background: #fdecee;
+    border-left: 3px solid var(--warn); border-radius: 3px;
   }
   .summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 0.8em;
-    margin-bottom: 1.2em;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.8em; margin-bottom: 1.2em;
   }
   .stat {
-    background: var(--accent-soft);
-    border-radius: 6px;
-    padding: 0.8em 1em;
+    background: var(--accent-soft); border-radius: 6px; padding: 0.8em 1em;
   }
   .stat .label {
-    font-size: 0.75em;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
+    font-size: 0.75em; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted);
   }
   .stat .value {
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--accent);
-    font-family: var(--mono);
-    word-break: break-word;
+    font-size: 1.1em; font-weight: 600; color: var(--accent);
+    font-family: var(--mono); word-break: break-word;
   }
   table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 0.9em;
+    border-collapse: collapse; width: 100%; font-size: 0.9em;
     margin: 0.6em 0 1.2em;
   }
   th, td {
-    border-bottom: 1px solid var(--rule);
-    padding: 0.4em 0.6em;
-    text-align: left;
-    vertical-align: top;
+    border-bottom: 1px solid var(--rule); padding: 0.4em 0.6em;
+    text-align: left; vertical-align: top;
   }
-  th {
-    background: #f4f6f8;
-    font-weight: 600;
-  }
+  th { background: #f4f6f8; font-weight: 600; }
   tr.selected { background: var(--good-soft); }
   code, .mono { font-family: var(--mono); font-size: 0.88em; }
   h3 {
-    font-size: 1em;
-    margin: 1.2em 0 0.4em;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-size: 1em; margin: 1.2em 0 0.4em; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
   }
   #chart {
-    width: 100%;
-    border-radius: 6px;
-    border: 1px solid var(--rule);
-    background: white;
-    display: block;
+    width: 100%; border-radius: 6px; border: 1px solid var(--rule);
+    background: white; display: block;
   }
-  .chart-placeholder {
-    padding: 3em 1em;
-    text-align: center;
-    color: var(--muted);
-    border: 2px dashed var(--rule);
-    border-radius: 6px;
+  .slider-row {
+    display: flex; gap: 1em; align-items: center; margin: 0.4em 0;
+  }
+  .slider-row label { min-width: 9em; margin: 0; }
+  .slider-row input[type="range"] { flex: 1; }
+  .slider-row .val {
+    min-width: 3.5em; text-align: right; font-family: var(--mono);
+    font-size: 0.85em; color: var(--muted);
+  }
+  #ws-status {
+    font-family: var(--mono); font-size: 0.85em;
+    padding: 0.3em 0.6em; border-radius: 3px;
+    display: inline-block; background: #eee; color: var(--muted);
+  }
+  #ws-status.connected { background: var(--good-soft); color: var(--good); }
+  #ws-status.error     { background: #fdecee; color: var(--warn); }
+  pre {
+    background: #fafafa; border: 1px solid var(--rule); border-radius: 4px;
+    padding: 0.8em; font-family: var(--mono); font-size: 0.8em;
+    overflow-x: auto; max-height: 28em;
   }
 </style>
 </head>
@@ -184,19 +123,18 @@
 
 <main>
 
-  <!-- INPUT -->
+  <!-- 1. INPUT -->
   <section class="panel" id="input-panel">
     <h2>1. Input</h2>
     <label><input type="radio" name="input-mode" value="preset" checked> Reference instance</label>
     <label><input type="radio" name="input-mode" value="custom"> Custom problem (JSON)</label>
-    <textarea id="custom-json" class="hidden" placeholder='Paste a full ProblemSpec (see /docs for schema).'></textarea>
-    <div>
-      <button id="run-btn">Run AGOP</button>
-    </div>
+    <textarea id="custom-json" class="hidden"
+              placeholder='Paste a full ProblemSpec (see /docs for schema).'></textarea>
+    <div><button id="run-btn">Run AGOP</button></div>
     <div id="error" class="error hidden"></div>
   </section>
 
-  <!-- SUMMARY -->
+  <!-- 2. SUMMARY -->
   <section class="panel" id="summary-panel">
     <h2>2. Summary</h2>
     <div id="summary" class="summary">
@@ -204,79 +142,102 @@
     </div>
   </section>
 
-  <!-- RANKING & PHASES -->
+  <!-- 3. RESULTS -->
   <section class="panel panel-full hidden" id="results-panel">
     <h2>3. Results</h2>
     <h3>Ranking</h3>
     <table id="ranking-table">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Alternative</th>
-          <th>Family τ</th>
-          <th>Φ = A · LCB</th>
-          <th>A (resonance)</th>
-          <th>LCB (Ŷ)</th>
-          <th>Adoption ν*</th>
+          <th>#</th><th>Alternative</th><th>Family τ</th>
+          <th>Φ = A · LCB</th><th>A (resonance)</th><th>LCB (Ŷ)</th><th>Adoption ν*</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-
     <h3>Survivor set D*</h3>
     <table id="survivor-table">
       <thead>
-        <tr>
-          <th>Alternative</th>
-          <th>Ŷ</th>
-          <th>LCB</th>
-          <th>A</th>
-          <th>Φ</th>
-          <th>Selected</th>
-        </tr>
+        <tr><th>Alternative</th><th>Ŷ</th><th>LCB</th>
+            <th>A</th><th>Φ</th><th>Selected</th></tr>
       </thead>
       <tbody></tbody>
     </table>
-
     <h3>Phase trace</h3>
     <table id="phase-table">
-      <thead>
-        <tr><th>Phase</th><th>Value</th></tr>
-      </thead>
+      <thead><tr><th>Phase</th><th>Value</th></tr></thead>
       <tbody></tbody>
     </table>
   </section>
 
-  <!-- CHART -->
+  <!-- 4. CHART -->
   <section class="panel panel-full hidden" id="chart-panel">
     <h2>4. Visualisation</h2>
     <img id="chart" alt="AGOP 4-panel chart" />
+  </section>
+
+  <!-- 5. LIVE AXES (WebSocket) -->
+  <section class="panel panel-full" id="live-panel">
+    <h2>5. Live axes (WebSocket)</h2>
+    <p>Status: <span id="ws-status">disconnected</span></p>
+    <div id="sliders"></div>
+    <button id="reset-live">Reset to reference</button>
+  </section>
+
+  <!-- 6. CALIBRATION -->
+  <section class="panel panel-full" id="calibration-panel">
+    <h2>6. Calibrate from historical episodes</h2>
+    <p style="color:var(--muted); font-size:0.9em; margin-top:0;">
+      Paste a JSON array of episodes:
+      <code>[{"alternatives": [...], "axes": {...}, "chosen": "S_2"}, ...]</code>
+    </p>
+    <textarea id="episodes-json" style="min-height:120px;"
+              placeholder='[{"alternatives":["S_1","S_2"],
+  "axes":{"pain":{"S_1":0.9,"S_2":0.9},
+          "integration":{"S_1":0.9,"S_2":0.9},
+          "regulatory":{"S_1":0.2,"S_2":0.2},
+          "readiness":{"S_1":0.85,"S_2":0.90},
+          "barrier":{"S_1":0.15,"S_2":0.20}},
+  "chosen":"S_2"}]'></textarea>
+    <div>
+      <label style="display:inline-block; margin-right:1.5em;">
+        β (softmax temperature): <input id="beta" type="number" value="1.0" step="0.1" min="0.1" style="width:5em;">
+      </label>
+      <label style="display:inline-block;">
+        σ prior: <input id="sigma-prior" type="number" value="0.15" step="0.01" min="0.01" style="width:5em;">
+      </label>
+    </div>
+    <button id="calibrate-btn">Calibrate</button>
+    <div id="calibration-error" class="error hidden"></div>
+    <pre id="calibration-out" class="hidden"></pre>
   </section>
 
 </main>
 
 <script>
 (() => {
-  const runBtn      = document.getElementById('run-btn');
-  const errorBox    = document.getElementById('error');
-  const customJson  = document.getElementById('custom-json');
-  const summary     = document.getElementById('summary');
-  const resultsPanel = document.getElementById('results-panel');
-  const chartPanel   = document.getElementById('chart-panel');
-  const chartImg     = document.getElementById('chart');
+  // ── Shared DOM ─────────────────────────────────────────────
+  const runBtn        = document.getElementById('run-btn');
+  const errorBox      = document.getElementById('error');
+  const customJson    = document.getElementById('custom-json');
+  const summary       = document.getElementById('summary');
+  const resultsPanel  = document.getElementById('results-panel');
+  const chartPanel    = document.getElementById('chart-panel');
+  const chartImg      = document.getElementById('chart');
 
   let chartUrl = null;
 
+  // ── Input-mode toggle ─────────────────────────────────────
   function mode() {
     return document.querySelector('input[name="input-mode"]:checked').value;
   }
-
   document.querySelectorAll('input[name="input-mode"]').forEach(r => {
     r.addEventListener('change', () => {
       customJson.classList.toggle('hidden', mode() !== 'custom');
     });
   });
 
+  // ── Error handling ────────────────────────────────────────
   function showError(msg) {
     errorBox.textContent = msg;
     errorBox.classList.remove('hidden');
@@ -286,38 +247,40 @@
     errorBox.textContent = '';
   }
 
-  function buildBody() {
-    if (mode() === 'preset') {
-      return { preset: 'reference' };
-    }
-    const parsed = JSON.parse(customJson.value);
-    return { problem: parsed };
-  }
+  // ── Renderers ─────────────────────────────────────────────
+  function renderSummary(data) {
+    const rank  = data.ranking.join(' &gt; ');
+    const eqLbl = (s, labels) => {
+      const i = s.indexOf(Math.max(...s));
+      return `${labels[i]} (${Math.max(...s).toFixed(2)})`;
+    };
+    const sigmaDM = data.nash?.sigma_DM ?? [0, 1];
+    const sigmaCP = data.nash?.sigma_CP ?? [1, 0];
 
-  function setStatus(text) {
     summary.innerHTML = `
-      <div class="stat"><div class="label">Status</div><div class="value">${text}</div></div>
+      <div class="stat"><div class="label">Ranking</div>
+        <div class="value">${rank}</div></div>
+      <div class="stat"><div class="label">Survivors |D*|</div>
+        <div class="value">${data.D_star.length}</div></div>
+      <div class="stat"><div class="label">Top-K |R|</div>
+        <div class="value">${data.ranking.length}</div></div>
+      <div class="stat"><div class="label">Convergence depth</div>
+        <div class="value">${data.convergence_depth ?? '—'}</div></div>
+      <div class="stat"><div class="label">Market Nash — DM</div>
+        <div class="value">${eqLbl(sigmaDM, ['bespoke', 'standard'])}</div></div>
+      <div class="stat"><div class="label">Market Nash — CP</div>
+        <div class="value">${eqLbl(sigmaCP, ['adopt', 'demand'])}</div></div>
     `;
   }
 
-  function renderSummary(data) {
-    const rank = data.ranking.join(' &gt; ');
-    const ds   = data.D_star.join(', ');
-    const cd   = data.convergence_depth;
-    const eqDM = data.nash.sigma_DM;
-    const eqCP = data.nash.sigma_CP;
-    const eqLbl = (s, labels) => {
-      const i = s.indexOf(Math.max(...s));
-      return `${labels[i]} (${(Math.max(...s)).toFixed(2)})`;
-    };
-
+  function renderLive(data) {
     summary.innerHTML = `
-      <div class="stat"><div class="label">Ranking</div><div class="value">${rank}</div></div>
-      <div class="stat"><div class="label">Survivors |D*|</div><div class="value">${data.D_star.length}</div></div>
-      <div class="stat"><div class="label">Top-K |R|</div><div class="value">${data.ranking.length}</div></div>
-      <div class="stat"><div class="label">Convergence depth</div><div class="value">${cd}</div></div>
-      <div class="stat"><div class="label">Market Nash — DM</div><div class="value">${eqLbl(eqDM, ['bespoke', 'standard'])}</div></div>
-      <div class="stat"><div class="label">Market Nash — CP</div><div class="value">${eqLbl(eqCP, ['adopt', 'demand'])}</div></div>
+      <div class="stat"><div class="label">Ranking (live)</div>
+        <div class="value">${data.ranking.join(' &gt; ')}</div></div>
+      <div class="stat"><div class="label">Survivors</div>
+        <div class="value">${data.D_star.length}</div></div>
+      <div class="stat"><div class="label">Source</div>
+        <div class="value">WebSocket</div></div>
     `;
   }
 
@@ -362,8 +325,9 @@
 
   function renderPhases(data) {
     const tbody = document.querySelector('#phase-table tbody');
+    const adopted = Object.entries(data.adoption)
+      .filter(([_, v]) => v === 1).map(([k]) => k).join(', ');
     const rows = [
-      ['0. G_0 edges',         '— (see chart)'],
       ['3. Nash σ_DM',         JSON.stringify(data.nash.sigma_DM)],
       ['3. Nash σ_CP',         JSON.stringify(data.nash.sigma_CP)],
       ['4. Loops (total)',     data.systems.loop_count],
@@ -372,7 +336,7 @@
       ['4. Bottleneck size',   data.systems.bottleneck_size],
       ['6. Convergence depth', data.convergence_depth],
       ['6. |D*|',              data.D_star.length],
-      ['7. Adopted',           Object.entries(data.adoption).filter(([_, v]) => v === 1).map(([k]) => k).join(', ')],
+      ['7. Adopted',           adopted],
       ['11. |R|',              data.ranking.length],
     ];
     tbody.innerHTML = '';
@@ -383,6 +347,7 @@
     });
   }
 
+  // ── Chart fetch ───────────────────────────────────────────
   async function fetchChart(body) {
     if (chartUrl) {
       URL.revokeObjectURL(chartUrl);
@@ -402,12 +367,18 @@
     chartImg.src = chartUrl;
   }
 
+  // ── Run AGOP ──────────────────────────────────────────────
+  function buildBody() {
+    if (mode() === 'preset') return { preset: 'reference' };
+    return { problem: JSON.parse(customJson.value) };
+  }
+
   runBtn.addEventListener('click', async () => {
     clearError();
     runBtn.disabled = true;
-    setStatus('running…');
     resultsPanel.classList.add('hidden');
     chartPanel.classList.add('hidden');
+    summary.innerHTML = `<div class="stat"><div class="label">Status</div><div class="value">running…</div></div>`;
 
     try {
       const body = buildBody();
@@ -427,20 +398,118 @@
       renderRanking(data);
       renderSurvivors(data);
       renderPhases(data);
-
       resultsPanel.classList.remove('hidden');
 
       await fetchChart(body);
       chartPanel.classList.remove('hidden');
     } catch (e) {
       showError(e.message || String(e));
-      setStatus('error');
+      summary.innerHTML = `<div class="stat"><div class="label">Status</div><div class="value">error</div></div>`;
     } finally {
       runBtn.disabled = false;
     }
   });
 
-  // Auto-run reference on first load
+  // ── Live WebSocket axes ──────────────────────────────────
+  const wsStatus   = document.getElementById('ws-status');
+  const slidersDiv = document.getElementById('sliders');
+  const AXES = ['pain', 'integration', 'regulatory', 'readiness', 'barrier'];
+  const ALL_V = ['S_1', 'S_2', 'S_10', 'S_12'];
+  let ws = null;
+
+  function setWsStatus(text, cls) {
+    wsStatus.textContent = text;
+    wsStatus.className = cls || '';
+  }
+
+  function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws/agop/stream`);
+    ws.onopen    = () => setWsStatus('connected', 'connected');
+    ws.onclose   = () => { setWsStatus('disconnected', ''); setTimeout(connectWS, 2000); };
+    ws.onerror   = () => setWsStatus('error', 'error');
+    ws.onmessage = (ev) => {
+      const data = JSON.parse(ev.data);
+      if (data.error) { setWsStatus('error: ' + data.error, 'error'); return; }
+      if (data.pong) return;
+      renderLive(data);
+    };
+  }
+
+  AXES.forEach(axis => {
+    const row = document.createElement('div');
+    row.className = 'slider-row';
+    row.innerHTML = `
+      <label class="mono">${axis}</label>
+      <input type="range" min="0" max="1" step="0.01" value="0.5" data-axis="${axis}">
+      <span class="val" data-for="${axis}">0.50</span>
+    `;
+    slidersDiv.appendChild(row);
+  });
+
+  slidersDiv.addEventListener('input', (e) => {
+    const axis = e.target.dataset.axis;
+    if (!axis) return;
+    const val = parseFloat(e.target.value);
+    const valLabel = slidersDiv.querySelector(`span.val[data-for="${axis}"]`);
+    if (valLabel) valLabel.textContent = val.toFixed(2);
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const values = {};
+    ALL_V.forEach(v => { values[v] = val; });
+    ws.send(JSON.stringify({ type: 'axis_update', axes: { [axis]: values } }));
+  });
+
+  document.getElementById('reset-live').onclick = () => {
+    if (ws && ws.readyState === WebSocket.OPEN)
+      ws.send(JSON.stringify({ type: 'reset' }));
+    slidersDiv.querySelectorAll('input[type="range"]').forEach(i => {
+      i.value = '0.5';
+      const lbl = slidersDiv.querySelector(`span.val[data-for="${i.dataset.axis}"]`);
+      if (lbl) lbl.textContent = '0.50';
+    });
+  };
+
+  connectWS();
+
+  // ── Calibration ──────────────────────────────────────────
+  const calibrateBtn = document.getElementById('calibrate-btn');
+  const calibErr     = document.getElementById('calibration-error');
+  const calibOut     = document.getElementById('calibration-out');
+
+  calibrateBtn.addEventListener('click', async () => {
+    calibErr.classList.add('hidden');
+    calibOut.classList.add('hidden');
+    calibrateBtn.disabled = true;
+    calibOut.textContent = 'calibrating… (this runs L-BFGS plus a Laplace '
+                        +  'approximation; may take 10–60 s)';
+    calibOut.classList.remove('hidden');
+
+    try {
+      const episodes = JSON.parse(document.getElementById('episodes-json').value);
+      const beta = parseFloat(document.getElementById('beta').value);
+      const sigma_prior = parseFloat(document.getElementById('sigma-prior').value);
+
+      const resp = await fetch('/api/agop/calibrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ episodes, beta, sigma_prior }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+        throw new Error(err.detail || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      calibOut.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      calibErr.textContent = e.message || String(e);
+      calibErr.classList.remove('hidden');
+      calibOut.classList.add('hidden');
+    } finally {
+      calibrateBtn.disabled = false;
+    }
+  });
+
+  // ── Auto-run reference on first load ─────────────────────
   runBtn.click();
 })();
 </script>
