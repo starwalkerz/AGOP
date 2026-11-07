@@ -1,6 +1,8 @@
 # AGOP Decision Engine
 
 > A computable decision procedure for multi-criteria selection under uncertainty.
+>
+> NOTICE & FAIR WARNING: THIS SOFTWARE ASSUMES THAT THE GARBAGE IN & GARBAGE OUT -PROBLEM HAS BEEN SOLVED BY THE USER! IT WORKS PROPERLY, IF YOUR DATA IS PERFECT, OTHERWISE IT WILL BE WRONG! THEREFORE IT WILL ALWAYS BE WRONG, BUT ON THE OTHER HAND, THE RESULTS MAY BE USEFUL! 
 
 AGOP (Attributed-Graph Operator Pipeline) ranks a finite set of alternatives
 under multiple decision axes, a strategic counter-party, structural
