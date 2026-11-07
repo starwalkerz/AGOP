@@ -4,6 +4,8 @@
 >
 > NOTICE & FAIR WARNING: THIS SOFTWARE ASSUMES THAT THE GARBAGE IN & GARBAGE OUT -PROBLEM HAS BEEN SOLVED BY THE USER! IT WORKS PROPERLY, IF YOUR DATA IS PERFECT, OTHERWISE IT WILL BE WRONG! THEREFORE IT WILL ALWAYS BE WRONG, BUT ON THE OTHER HAND, THE RESULTS MAY BE USEFUL! 
 
+Yes, this project was created with the help of free DeepSeek AI.
+
 AGOP (Attributed-Graph Operator Pipeline) ranks a finite set of alternatives
 under multiple decision axes, a strategic counter-party, structural
 compatibility relations, and uncertain outcomes. It composes graph-theoretic,
