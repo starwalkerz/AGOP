@@ -407,4 +407,4 @@ See §9 of the reference article for the full statement.
 
 ## 10. License
 
-Research and evaluation use. For commercial licensing, contact the authors.
+MIT License
