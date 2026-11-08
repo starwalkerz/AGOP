@@ -19,6 +19,23 @@ This package provides:
 - a publication-quality PNG chart generator (`agop_charts.py`);
 - a convenience launcher (`run.py`).
 
+# Degen view:
+
+# AGOP Decision Engine — The Executive Toxic Flow Gate
+
+A deterministic, algebraic multi-criteria operations verification pipeline and risk-routing matrix built to automate multi-legged execution alternative rankings while surviving toxic counter-party flow. It completely rejects open-ended, fuzzy statistical AI recommendations to enforce strict, un-gameable mathematical fixed points.
+
+## 🧠 Core Mechanics
+- **The Deterministic Sandwich:** Machine learning (`agop_ml.py`) is ruthlessly stripped of executive authority and contained strictly on the extreme boundaries. It runs ahead of the engine to act as a low-level data loader (normalizing raw market strings into criteria arrays) and wakes up at the back gate to map post-hoc sensitivity traces. 
+- **The Game-Theoretic Vault:** The core algorithm (`agop_core.py`) is 100% free of ML. It projects execution options onto a finite two-player game payoff matrix ($U_{DM}, U_{CP}$) pitting your capital against a strategic opponent (a toxic front-running HFT desk or arbitrage competitor), analytically computing the exact mixed-strategy Nash equilibrium to choose an action that is mathematically immune to exploitation.
+- **Topological Invariant Filters:** Surviving alternatives are passed through three strict deductive filters (*pain, standardisation, regulatory*), a Weisfeiler-Lehman (WL) graph isomorphism color-refinement subroutine to group structural classes, and a final $M=10,000$ Monte Carlo integration loop to verify a non-negative Lower Confidence Bound (LCB) under capacity-constrained population limits.
+
+## ⚠️ The GIGO Pact & Disclaimer
+- **Garbage In, Garbage Out:** The code behaves as a cold decision procedure. If your initial prior weights or risk metrics are wrong, the engine will flawlessly compute a highly sophisticated, mathematically pristine ranking that is completely useless.
+- **Empty Regulatory Placeholder:** The repository includes a `regulatory` stopgap key gated by the API Pydantic validator. It is left entirely blank by design. It contains zero legal compliance data or geographical jurisdiction rules. You can bypass it by setting the parameters to zero, or fill it with your own specific transaction-fee or clearance constraints. 
+- **Status:** Shared purely as an open-source, unmonetized thesis under the MIT License. The author assumes exactly zero responsibility for what you choose to execute with these primitives in the wild.
+
+
 ---
 
 ## 1. What it does
