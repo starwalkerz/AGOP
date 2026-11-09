@@ -1,16 +1,13 @@
 """
 agop_api_design_by_contract.py — FastAPI boundary for the DbC AGOP core.
 
-This file is the canonical API for the design-by-contract path. It imports
-from agop_core_design_by_contract (not from agop_core) so that:
+Imports from agop_core_design_by_contract (not from agop_core) so that:
   * capacity K is derived endogenously inside agop(),
   * the verifies_theorem_5 decorator runs on every call,
   * a contract breach surfaces as HTTP 422, not 500.
 
 K is absent from ThetaSpec by design. Extra fields are rejected, so a
-client cannot inject K accidentally or intentionally. The response payload
-includes K_derived, n_wl_classes, and both Nash entropies so the derivation
-is auditable from the client side.
+client cannot inject K accidentally or intentionally.
 """
 
 from __future__ import annotations
@@ -27,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
-# Import from the design-by-contract core, NOT from agop_core.
+# The DbC core, NOT agop_core.
 from agop_core_design_by_contract import (
     Theta,
     Problem,
@@ -42,23 +39,16 @@ EXECUTOR = ProcessPoolExecutor(max_workers=4)
 
 
 async def _run_agop(problem: Problem) -> State:
-    """Run the DbC agop() in a worker process without blocking the loop."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(EXECUTOR, agop, problem)
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Pydantic schemas — K is NOT a valid theta field
+# Schemas — K is not a valid theta field
 # ─────────────────────────────────────────────────────────────────────
 
 
 class ThetaSpec(BaseModel):
-    """
-    Theta vector for the DbC core. K is deliberately absent: it is derived
-    inside agop() from WL class cardinality and Nash entropy. Because the
-    model config forbids extra fields, a client that includes K in the
-    request body receives a 422 with the offending field named.
-    """
     model_config = {"extra": "forbid"}
 
     c_b: float = 10.0
@@ -169,14 +159,12 @@ def resolve_problem(req: AgopRequest) -> Problem:
 
 
 def state_to_dict(state: State) -> dict:
-    """Serialise the DbC State including the endogenous capacity derivation."""
     sigma_DM, sigma_CP = state.e_1
     return {
         "ranking": state.R,
         "D_star": sorted(state.D_star),
         "convergence_depth": state.convergence_depth,
 
-        # Endogenous capacity derivation — the audit trail
         "n_wl_classes": state.n_wl_classes,
         "nash_entropy": {
             "H_sigma_DM": _shannon_entropy(sigma_DM),
@@ -184,7 +172,6 @@ def state_to_dict(state: State) -> dict:
         },
         "K_derived": state.K_derived,
 
-        # Phase outputs
         "gamma": {k: round(float(v), 6) for k, v in state.gamma.items()},
         "payoff": {
             "U_DM": state.Pi[:, :, 0].round(4).tolist(),
@@ -204,7 +191,6 @@ def state_to_dict(state: State) -> dict:
         "resonance": {k: round(float(v), 6) for k, v in state.A.items()},
         "composite": {k: round(float(v), 4) for k, v in state.Phi.items()},
 
-        # Certified AdmissibilityState list (Theorem 5 post-conditions)
         "certified": [
             {
                 "alternative": c.alternative,
@@ -219,19 +205,16 @@ def state_to_dict(state: State) -> dict:
 
 
 # ─────────────────────────────────────────────────────────────────────
-# FastAPI app
+# App
 # ─────────────────────────────────────────────────────────────────────
 
 
 app = FastAPI(
     title="AGOP Decision Engine (Design-by-Contract)",
     description=(
-        "A computable decision procedure for multi-criteria selection under "
-        "uncertainty. Capacity K is derived endogenously from WL class "
-        "cardinality and Nash entropy. The verifies_theorem_5 decorator "
-        "enforces Theorem 2 (convergence depth = 1) and Theorem 5 "
-        "(admissibility of every returned alternative) on every call. "
-        "A contract breach surfaces as HTTP 422, not 500."
+        "Capacity K is derived endogenously from WL class cardinality and "
+        "Nash entropy. The verifies_theorem_5 decorator enforces Theorem 2 "
+        "and Theorem 5 on every call. A contract breach returns HTTP 422."
     ),
     version="1.3.0",
 )
@@ -266,17 +249,9 @@ async def api_agop(req: AgopRequest):
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except AssertionError as e:
-        # The verifies_theorem_5 decorator fired. This is a contract
-        # breach on the client's input, not a server error.
-        raise HTTPException(
-            status_code=422,
-            detail=f"Contract violated: {e}",
-        )
+        raise HTTPException(status_code=422, detail=f"Contract violated: {e}")
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"{type(e).__name__}: {e}",
-        )
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
     return state_to_dict(state)
 
 
@@ -290,27 +265,19 @@ async def api_agop_chart(req: AgopRequest):
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except AssertionError as e:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Contract violated: {e}",
-        )
+        raise HTTPException(status_code=422, detail=f"Contract violated: {e}")
     except ImportError:
         raise HTTPException(
             status_code=501,
             detail="agop_charts module not installed; chart endpoint unavailable",
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"{type(e).__name__}: {e}",
-        )
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
     return Response(content=png, media_type="image/png")
 
 
 @app.get("/api/agop/sse")
 async def api_agop_sse():
-    """Stream the phase trace; each tick carries the full DbC payload."""
-
     async def event_stream():
         problem = reference_instance()
         phases = [
@@ -328,16 +295,10 @@ async def api_agop_sse():
                 payload = {"phase": name, "key": key, "data": state_to_dict(state)}
                 yield f"data: {json.dumps(payload)}\n\n"
             except AssertionError as e:
-                yield (
-                    f"event: contract_violation\n"
-                    f"data: {json.dumps({'detail': str(e)})}\n\n"
-                )
+                yield f"event: contract_violation\ndata: {json.dumps({'detail': str(e)})}\n\n"
                 return
             except Exception as e:
-                yield (
-                    f"event: error\n"
-                    f"data: {json.dumps({'detail': f'{type(e).__name__}: {e}'})}\n\n"
-                )
+                yield f"event: error\ndata: {json.dumps({'detail': f'{type(e).__name__}: {e}'})}\n\n"
                 return
         yield "event: done\ndata: {}\n\n"
 
@@ -346,7 +307,6 @@ async def api_agop_sse():
 
 @app.websocket("/ws/agop/stream")
 async def ws_agop_stream(ws: WebSocket):
-    """Continuous axis updates against the DbC core."""
     await ws.accept()
     problem = reference_instance()
     try:
@@ -390,11 +350,6 @@ async def ws_agop_stream(ws: WebSocket):
             await ws.send_json({"error": f"{type(e).__name__}: {e}"})
         except Exception:
             pass
-
-
-# ─────────────────────────────────────────────────────────────────────
-# Self-check on import
-# ─────────────────────────────────────────────────────────────────────
 
 
 if __name__ == "__main__":
