@@ -25,6 +25,8 @@ The updated agop_core.py and agop_api.py refactor AGOP from a pipeline that acce
 
 By linking operational scope entirely to structural diversity and game tension, this design accepts the deliberate risk of conservative capacity compression via the 1-WL refinement heuristic to preserve linear-time computational guarantees. It trades customizable headroom for total immunity to configuration bias, sealing the pipeline behind an immutable Design-by-Contract (DbC) execution boundary that prevents any mathematically invalid state from surviving runtime execution.
 
+PRACTICALLY MEANS THAT YOUR TRADING BOT REVERTS TO NEAR-ZERO LOSS, OR NEAR-ZERO PROFIT WHEN IT CAN'T DETERMINE A WINNING STRATEGY.
+
 # Degen view:
 
 # AGOP Decision Engine — The Executive Toxic Flow Gate
