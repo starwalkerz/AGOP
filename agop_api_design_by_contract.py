@@ -1,17 +1,22 @@
 """
-agop_api.py — async FastAPI for AGOP, refactored.
+agop_api_design_by_contract.py — FastAPI boundary for the DbC AGOP core.
 
-Changes:
-  * K removed from ThetaSpec (endogenous in agop_core).
-  * ThetaSpec and ProblemSpec reject extra fields (forbid) so that a client
-    cannot inject K by accident or by intent.
-  * All CPU-bound endpoints still offload to ProcessPoolExecutor; the core
-    function remains strictly synchronous.
+This file is the canonical API for the design-by-contract path. It imports
+from agop_core_design_by_contract (not from agop_core) so that:
+  * capacity K is derived endogenously inside agop(),
+  * the verifies_theorem_5 decorator runs on every call,
+  * a contract breach surfaces as HTTP 422, not 500.
+
+K is absent from ThetaSpec by design. Extra fields are rejected, so a
+client cannot inject K accidentally or intentionally. The response payload
+includes K_derived, n_wl_classes, and both Nash entropies so the derivation
+is auditable from the client side.
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Optional
@@ -22,8 +27,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
-from agop_core import (
-    Theta, Problem, State, agop, reference_instance,
+# Import from the design-by-contract core, NOT from agop_core.
+from agop_core_design_by_contract import (
+    Theta,
+    Problem,
+    State,
+    agop,
+    reference_instance,
     _shannon_entropy,
 )
 
@@ -32,6 +42,7 @@ EXECUTOR = ProcessPoolExecutor(max_workers=4)
 
 
 async def _run_agop(problem: Problem) -> State:
+    """Run the DbC agop() in a worker process without blocking the loop."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(EXECUTOR, agop, problem)
 
@@ -43,9 +54,10 @@ async def _run_agop(problem: Problem) -> State:
 
 class ThetaSpec(BaseModel):
     """
-    Theta vector. K is absent by design: it is derived endogenously inside
-    agop_core from WL class cardinality and Nash entropy. Extra fields are
-    rejected so that K cannot be injected by a client.
+    Theta vector for the DbC core. K is deliberately absent: it is derived
+    inside agop() from WL class cardinality and Nash entropy. Because the
+    model config forbids extra fields, a client that includes K in the
+    request body receives a 422 with the offending field named.
     """
     model_config = {"extra": "forbid"}
 
@@ -125,14 +137,22 @@ def spec_to_problem(spec: ProblemSpec) -> Problem:
         G.add_edge(u, v, sign=int(sign))
 
     theta = Theta(
-        c_b=spec.theta.c_b, c_s=spec.theta.c_s, w=spec.theta.w,
-        ell=spec.theta.ell, v_bar=spec.theta.v_bar,
-        theta_1=spec.theta.theta_1, theta_2=spec.theta.theta_2,
+        c_b=spec.theta.c_b,
+        c_s=spec.theta.c_s,
+        w=spec.theta.w,
+        ell=spec.theta.ell,
+        v_bar=spec.theta.v_bar,
+        theta_1=spec.theta.theta_1,
+        theta_2=spec.theta.theta_2,
         theta_3=spec.theta.theta_3,
-        sigma_R=spec.theta.sigma_R, sigma_B=spec.theta.sigma_B,
-        alpha_1=spec.theta.alpha_1, alpha_2=spec.theta.alpha_2,
+        sigma_R=spec.theta.sigma_R,
+        sigma_B=spec.theta.sigma_B,
+        alpha_1=spec.theta.alpha_1,
+        alpha_2=spec.theta.alpha_2,
         alpha_3=spec.theta.alpha_3,
-        M=spec.theta.M, alpha=spec.theta.alpha, seed=spec.theta.seed,
+        M=spec.theta.M,
+        alpha=spec.theta.alpha,
+        seed=spec.theta.seed,
         h=spec.theta.h,
         L_R={k: tuple(v) for k, v in spec.theta.L_R.items()},
         L_C={k: tuple(v) for k, v in spec.theta.L_C.items()},
@@ -149,34 +169,42 @@ def resolve_problem(req: AgopRequest) -> Problem:
 
 
 def state_to_dict(state: State) -> dict:
+    """Serialise the DbC State including the endogenous capacity derivation."""
+    sigma_DM, sigma_CP = state.e_1
     return {
         "ranking": state.R,
         "D_star": sorted(state.D_star),
         "convergence_depth": state.convergence_depth,
+
+        # Endogenous capacity derivation — the audit trail
         "n_wl_classes": state.n_wl_classes,
         "nash_entropy": {
-            "H_sigma_DM": _shannon_entropy(state.e_1[0]),
-            "H_sigma_CP": _shannon_entropy(state.e_1[1]),
+            "H_sigma_DM": _shannon_entropy(sigma_DM),
+            "H_sigma_CP": _shannon_entropy(sigma_CP),
         },
         "K_derived": state.K_derived,
+
+        # Phase outputs
         "gamma": {k: round(float(v), 6) for k, v in state.gamma.items()},
         "payoff": {
             "U_DM": state.Pi[:, :, 0].round(4).tolist(),
             "U_CP": state.Pi[:, :, 1].round(4).tolist(),
         },
         "nash": {
-            "sigma_DM": state.e_1[0].round(6).tolist(),
-            "sigma_CP": state.e_1[1].round(6).tolist(),
+            "sigma_DM": sigma_DM.round(6).tolist(),
+            "sigma_CP": sigma_CP.round(6).tolist(),
         },
         "systems": state.Sigma,
         "topology": state.T,
         "adoption": state.nu_star,
         "monte_carlo": {
             "Y_hat": {k: round(float(v), 4) for k, v in state.Y_hat.items()},
-            "LCB":   {k: round(float(v), 4) for k, v in state.LCB.items()},
+            "LCB": {k: round(float(v), 4) for k, v in state.LCB.items()},
         },
         "resonance": {k: round(float(v), 6) for k, v in state.A.items()},
         "composite": {k: round(float(v), 4) for k, v in state.Phi.items()},
+
+        # Certified AdmissibilityState list (Theorem 5 post-conditions)
         "certified": [
             {
                 "alternative": c.alternative,
@@ -196,13 +224,16 @@ def state_to_dict(state: State) -> dict:
 
 
 app = FastAPI(
-    title="AGOP Decision Engine",
+    title="AGOP Decision Engine (Design-by-Contract)",
     description=(
         "A computable decision procedure for multi-criteria selection under "
         "uncertainty. Capacity K is derived endogenously from WL class "
-        "cardinality and Nash entropy, not supplied by the caller."
+        "cardinality and Nash entropy. The verifies_theorem_5 decorator "
+        "enforces Theorem 2 (convergence depth = 1) and Theorem 5 "
+        "(admissibility of every returned alternative) on every call. "
+        "A contract breach surfaces as HTTP 422, not 500."
     ),
-    version="1.2.0",
+    version="1.3.0",
 )
 
 app.add_middleware(
@@ -212,19 +243,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-UI_FILE = Path(__file__).parent / "agop_ui.html"
+UI_FILE = Path(__file__).parent / "agop_ui_design_by_contract.html"
 
 
 @app.get("/", include_in_schema=False)
 async def root():
     if UI_FILE.exists():
         return FileResponse(UI_FILE, media_type="text/html")
-    return {"message": "AGOP API running. See /docs for the OpenAPI UI."}
+    return {"message": "AGOP DbC API running. See /docs for the OpenAPI UI."}
 
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "core": "design_by_contract", "version": "1.3.0"}
 
 
 @app.post("/api/agop")
@@ -235,10 +266,17 @@ async def api_agop(req: AgopRequest):
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except AssertionError as e:
-        # Design-by-Contract breach: surface it distinctly.
-        raise HTTPException(status_code=422, detail=f"Contract violated: {e}")
+        # The verifies_theorem_5 decorator fired. This is a contract
+        # breach on the client's input, not a server error.
+        raise HTTPException(
+            status_code=422,
+            detail=f"Contract violated: {e}",
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"{type(e).__name__}: {e}",
+        )
     return state_to_dict(state)
 
 
@@ -252,33 +290,54 @@ async def api_agop_chart(req: AgopRequest):
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except AssertionError as e:
-        raise HTTPException(status_code=422, detail=f"Contract violated: {e}")
+        raise HTTPException(
+            status_code=422,
+            detail=f"Contract violated: {e}",
+        )
+    except ImportError:
+        raise HTTPException(
+            status_code=501,
+            detail="agop_charts module not installed; chart endpoint unavailable",
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"{type(e).__name__}: {e}",
+        )
     return Response(content=png, media_type="image/png")
 
 
 @app.get("/api/agop/sse")
 async def api_agop_sse():
+    """Stream the phase trace; each tick carries the full DbC payload."""
+
     async def event_stream():
         problem = reference_instance()
-        import json as _json
         phases = [
-            ("phase_1",  "centrality"),
-            ("phase_3",  "market_nash"),
-            ("phase_6",  "deductive"),
-            ("phase_8",  "monte_carlo"),
-            ("phase_10", "composite"),
+            ("phase_1", "centrality"),
+            ("phase_3", "market_nash"),
+            ("phase_5", "topology"),
+            ("phase_6", "deductive"),
+            ("phase_7", "adoption_nash"),
+            ("phase_8", "monte_carlo"),
             ("phase_11", "ranking"),
         ]
         for name, key in phases:
             try:
                 state = await _run_agop(problem)
-                payload = {"phase": name, "key": key,
-                           "data": state_to_dict(state)}
-                yield f"data: {_json.dumps(payload)}\n\n"
+                payload = {"phase": name, "key": key, "data": state_to_dict(state)}
+                yield f"data: {json.dumps(payload)}\n\n"
+            except AssertionError as e:
+                yield (
+                    f"event: contract_violation\n"
+                    f"data: {json.dumps({'detail': str(e)})}\n\n"
+                )
+                return
             except Exception as e:
-                yield f"event: error\ndata: {_json.dumps({'detail': str(e)})}\n\n"
+                yield (
+                    f"event: error\n"
+                    f"data: {json.dumps({'detail': f'{type(e).__name__}: {e}'})}\n\n"
+                )
                 return
         yield "event: done\ndata: {}\n\n"
 
@@ -287,6 +346,7 @@ async def api_agop_sse():
 
 @app.websocket("/ws/agop/stream")
 async def ws_agop_stream(ws: WebSocket):
+    """Continuous axis updates against the DbC core."""
     await ws.accept()
     problem = reference_instance()
     try:
@@ -302,23 +362,41 @@ async def ws_agop_stream(ws: WebSocket):
                 await ws.send_json({"pong": True})
                 continue
 
-            state = await _run_agop(problem)
+            try:
+                state = await _run_agop(problem)
+            except AssertionError as e:
+                await ws.send_json({
+                    "contract_violated": str(e),
+                    "K_derived": None,
+                    "ranking": [],
+                })
+                continue
+
             await ws.send_json({
                 "ranking": state.R,
                 "D_star": sorted(state.D_star),
                 "K_derived": state.K_derived,
                 "n_wl_classes": state.n_wl_classes,
+                "nash_entropy": {
+                    "H_sigma_DM": _shannon_entropy(state.e_1[0]),
+                    "H_sigma_CP": _shannon_entropy(state.e_1[1]),
+                },
                 "composite": {k: float(v) for k, v in state.Phi.items()},
             })
     except WebSocketDisconnect:
         pass
-    except AssertionError as e:
-        try:
-            await ws.send_json({"contract_violated": str(e)})
-        except Exception:
-            pass
     except Exception as e:
         try:
             await ws.send_json({"error": f"{type(e).__name__}: {e}"})
         except Exception:
             pass
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Self-check on import
+# ─────────────────────────────────────────────────────────────────────
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8001)
