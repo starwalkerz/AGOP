@@ -1,0 +1,15 @@
+PASS
+  D*                = ['S_1', 'S_10', 'S_12', 'S_2']
+  convergence_depth = 1
+  n_wl_classes      = 4
+  H(sigma_DM)       = 0.000000
+  H(sigma_CP)       = 0.000000
+  K_derived         = 4
+  R                 = ['S_12', 'S_2', 'S_1', 'S_10']
+  LCB(R)            = {'S_12': 26.93, 'S_2': 30.86, 'S_1': 23.95, 'S_10': 17.91}
+  Phi(R)            = {'S_12': 26.93, 'S_2': 22.58, 'S_1': 18.65, 'S_10': 13.11}
+  AdmissibilityState count = 4
+    S_12: lcb=26.934 nu*=1 phi=26.934 class=T_A
+    S_2: lcb=30.863 nu*=1 phi=22.581 class=T_B
+    S_1: lcb=23.951 nu*=1 phi=18.652 class=T_C
+    S_10: lcb=17.914 nu*=1 phi=13.109 class=T_D
